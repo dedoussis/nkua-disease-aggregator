@@ -19,3 +19,6 @@ $(PROGRAM): $(PROGRAM).cpp
 
 run: build
 	$(TARGET_DIR)/$(PROGRAM)
+
+docker-run:
+	docker run -it -v "$(shell pwd):/app/" -w /app/ gcc make run

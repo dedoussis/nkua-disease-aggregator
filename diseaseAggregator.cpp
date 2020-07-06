@@ -56,7 +56,7 @@ vector<Record> parseFileRecords(filesystem::path filePath)
     return records;
 }
 
-map<string, country_records> parseRecords(string inputDir)
+map<string, dated_records> parseRecords(string inputDir)
 {
     map<string, dated_records> records;
 
@@ -76,6 +76,6 @@ map<string, country_records> parseRecords(string inputDir)
 
 int main()
 {
-    map<string, country_records> records = parseRecords("./input_dir");
+    map<string, dated_records> records = parseRecords("./input_dir");
     cout << records["China"]["31-01-2020"][0].stringify() << endl;
 }
