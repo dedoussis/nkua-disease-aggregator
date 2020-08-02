@@ -1,5 +1,5 @@
 PROGRAM=diseaseAggregator
-CXXFLAGS=-Wall -Werror -pedantic -std=c++17
+CXXFLAGS=-Wall -Werror -pedantic -std=c++20
 OPTIMIZATION=-O2
 TARGET_DIR=$(shell pwd)/bin
 
