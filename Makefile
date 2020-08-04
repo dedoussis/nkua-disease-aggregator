@@ -3,7 +3,7 @@ CXXFLAGS=-Wall -Werror -pedantic -std=c++20
 OPTIMIZATION=-O2
 TARGET_DIR=$(shell pwd)/bin
 
-.PHONY: build clean distrib run
+.PHONY: build clean distrib run docker-run
 
 build: clean $(PROGRAM)
 
@@ -11,14 +11,14 @@ clean:
 	rm -rf $(TARGET_DIR)
 
 distrib:
-	tar -czf $(PROGRAM).tar.gz $(PROGRAM).cpp Makefile
+	tar -czf $(PROGRAM).tar.gz *.cpp Makefile
 
 $(PROGRAM): $(PROGRAM).cpp
 	mkdir $(TARGET_DIR)
-	g++ $(PROGRAM).cpp $(CXXFLAGS) $(OPTIMIZATION) -o $(TARGET_DIR)/$(PROGRAM)
+	g++ *.cpp *.h $(CXXFLAGS) $(OPTIMIZATION) -o $(TARGET_DIR)/$(PROGRAM)
 
 run: build
-	$(TARGET_DIR)/$(PROGRAM)
+	$(TARGET_DIR)/$(PROGRAM) –w 2 -b 1024 -i input_dir
 
 docker-run:
 	docker run -it -v "$(shell pwd):/app/" -w /app/ gcc make run

@@ -1,32 +1,31 @@
+#include "args.h"
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <map>
-#include <string>
-#include <tuple>
 #include <vector>
 
 using namespace std;
 
-enum record_type
+enum class RecordType
 {
-    ENTER,
-    EXIT
+    Enter,
+    Exit
 };
 
 struct Record
 {
     string recordID, patientFirstName, patientLastName, disease;
     int age;
-    record_type type;
+    RecordType type;
 
     string stringify()
     {
-        return "Record(recordID=" + recordID + ")";
+        return recordID + " " + patientFirstName + " " + patientLastName + " " + disease + " " + to_string(age);
     }
 };
 
-typedef map<string, vector<Record>> dated_records;
+using dated_records = map<string, vector<Record>>;
 
 vector<Record> parseFileRecords(filesystem::path filePath)
 {
@@ -39,16 +38,16 @@ vector<Record> parseFileRecords(filesystem::path filePath)
 
     while (infile >> recordID >> type >> patientFirstName >> patientLastName >> disease >> age)
     {
-        Record record = {recordID, patientFirstName, patientLastName, disease, age, type == "ENTER" ? ENTER : EXIT};
+        Record record = {recordID, patientFirstName, patientLastName, disease, age, type == "ENTER" ? RecordType::Enter : RecordType::Exit};
         records.push_back(record);
     }
 
     return records;
 }
 
-typedef tuple<int, int> range;
-typedef map<range, int> stats;
-typedef map<string, stats> disease_stats;
+using range = tuple<int, int>;
+using stats = map<range, int>;
+using disease_stats = map<string, stats>;
 
 const range RANGES[] = {{0, 20}, {21, 40}, {41, 60}, {61, numeric_limits<int>::max()}};
 
@@ -72,26 +71,28 @@ disease_stats generateSummaryStats(vector<Record> records)
 
 string generateReport(string date, string country, disease_stats diseaseStats)
 {
-    const string NEWLINE = "\n";
-    string report = date + NEWLINE + country + NEWLINE;
+    string report = date + NL + country + NL;
     for (auto [disease, stats] : diseaseStats)
     {
-        report += disease + NEWLINE;
+        report += disease + NL;
         for (auto range : RANGES)
         {
             auto [min, max] = range;
             int count = stats.contains(range) ? stats[range] : 0;
-            report += "Age range " + to_string(min) + "-" + to_string(max) + " years: " + to_string(count) + " cases" + NEWLINE;
+            report += "Age range " + to_string(min) + "-" + to_string(max) + " years: " + to_string(count) + " cases" + NL;
         }
 
-        report += NEWLINE;
+        report += NL;
     }
     return report;
 }
 
-map<string, dated_records> parseRecords(string inputDir)
+using records = map<string, dated_records>;
+using summary_stats = map<string, map<string, disease_stats>>;
+
+tuple<records, summary_stats> loadRecords(string inputDir)
 {
-    map<string, dated_records> records;
+    map<string, dated_records> loadedRecords;
     map<string, map<string, disease_stats>> summaryStats;
     for (auto &p : filesystem::recursive_directory_iterator(inputDir))
     {
@@ -104,15 +105,71 @@ map<string, dated_records> parseRecords(string inputDir)
             cout << generateReport(date, country, fileStats);
 
             summaryStats[date][country] = fileStats;
-            records[country][date] = fileRecords;
+            loadedRecords[country][date] = fileRecords;
         }
     }
 
-    return records;
+    return make_tuple(loadedRecords, summaryStats);
 }
 
-int main()
+struct Visitor
 {
-    map<string, dated_records> records = parseRecords("./input_dir");
-    cout << records["China"]["31-01-2020"][0].stringify() << endl;
+    records loadedRecords;
+    summary_stats summaryStats;
+
+    string operator()(DiseaseFrequencyOptions opts)
+    {
+        return "Computing disease frequency for dieasease: " + opts.virusName;
+    }
+    string operator()(SearchPatientRecordOptions opts)
+    {
+        for (auto const &[country, datedRecords] : loadedRecords)
+        {
+            for (auto const &[date, records] : datedRecords)
+            {
+                for (auto record : records)
+                {
+                    if (record.recordID == opts.recordID)
+                    {
+                        return record.stringify();
+                    }
+                }
+            }
+        }
+        return "Patient not found.";
+    }
+    string operator()(ExitOptions opts)
+    {
+        return "Bye!";
+    }
+};
+
+int main(int argc, char *argv[])
+{
+    InitialOptions options = parseInitialArgs(argc, argv);
+    auto [loadedRecords, summaryStats] = loadRecords(options.inputDir);
+
+    Command command = Command();
+    while (command != Command::Exit)
+    {
+        cout << "Enter your command:" << endl;
+        string inputString;
+        getline(cin, inputString);
+        try
+        {
+            auto [newCommand, opts] = parseInputString(inputString);
+            command = newCommand;
+
+            Visitor visitor = {.loadedRecords = loadedRecords, .summaryStats = summaryStats};
+            string output = visit(visitor, opts);
+
+            cout << output << endl;
+        }
+        catch (const std::runtime_error &error)
+        {
+            cerr << error.what() << endl;
+        }
+    }
+
+    return 0;
 }
