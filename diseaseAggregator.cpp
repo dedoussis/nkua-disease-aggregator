@@ -1,9 +1,12 @@
-#include "args.h"
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <unistd.h>
 #include <vector>
+#include "args.h"
+#include "common.h"
+#include "io.h"
 
 using namespace std;
 
@@ -112,16 +115,18 @@ tuple<records, summary_stats> loadRecords(string inputDir)
     return make_tuple(loadedRecords, summaryStats);
 }
 
-struct Visitor
+struct Handler
 {
     records loadedRecords;
     summary_stats summaryStats;
 
-    string operator()(DiseaseFrequencyOptions opts)
+    Response operator()(DiseaseFrequencyRequest request)
     {
-        return "Computing disease frequency for dieasease: " + opts.virusName;
+        PrintableResponse res;
+        res.data = "Computing disease frequency for dieasease: " + request.virusName;
+        return res;
     }
-    string operator()(SearchPatientRecordOptions opts)
+    Response operator()(SearchPatientRecordRequest request)
     {
         for (auto const &[country, datedRecords] : loadedRecords)
         {
@@ -129,45 +134,74 @@ struct Visitor
             {
                 for (auto record : records)
                 {
-                    if (record.recordID == opts.recordID)
+                    if (record.recordID == request.recordID)
                     {
-                        return record.stringify();
+                        PrintableResponse res;
+                        res.data = record.stringify();
+                        return res;
                     }
                 }
             }
         }
-        return "Patient not found.";
+        PrintableResponse res;
+        res.data = "Patient not found.";
+        return res;
     }
-    string operator()(ExitOptions opts)
+    Response operator()(ExitRequest request)
     {
-        return "Bye!";
+        PrintableResponse res;
+        res.data = "Bye!";
+        return res;
     }
 };
 
 int main(int argc, char *argv[])
 {
-    InitialOptions options = parseInitialArgs(argc, argv);
-    auto [loadedRecords, summaryStats] = loadRecords(options.inputDir);
+    InitialArgs args = parseInitialArgs(argc, argv);
+    auto [loadedRecords, summaryStats] = loadRecords(args.inputDir);
+
+    const char *pipePath = "pipe";
+    NamedPipe namedPipe(pipePath, args.bufferSize);
 
     Command command = Command();
-    while (command != Command::Exit)
+    if (fork())
     {
-        cout << "Enter your command:" << endl;
-        string inputString;
-        getline(cin, inputString);
-        try
+        while (command != Command::Exit)
         {
-            auto [newCommand, opts] = parseInputString(inputString);
-            command = newCommand;
+            cout << "Enter your command:" << endl;
+            string inputString;
+            getline(cin, inputString);
+            Request request;
+            try 
+            {
+                tie(command, request) = parseCommand(inputString);
+            }
+            catch (const std::runtime_error &error)
+            {
+                cerr << error.what() << endl;
+                continue;
+            }
+            string serialized = serialize(request);
 
-            Visitor visitor = {.loadedRecords = loadedRecords, .summaryStats = summaryStats};
-            string output = visit(visitor, opts);
+            namedPipe.send(serialized);
+
+            auto [type, output] = namedPipe.receive();
 
             cout << output << endl;
         }
-        catch (const std::runtime_error &error)
+    }
+    else
+    {
+        while (command != Command::Exit)
         {
-            cerr << error.what() << endl;
+            auto [type, serializedInput] = namedPipe.receive();
+            
+            Deserializer<Request> deserializer = getRequestDeserializer(type);
+            Handler handler = {.loadedRecords = loadedRecords, .summaryStats = summaryStats};
+            Request request = deserializer(serializedInput);
+            Response response = visit(handler, request);
+
+            namedPipe.send(serialize(response));
         }
     }
 

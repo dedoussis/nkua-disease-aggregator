@@ -5,8 +5,9 @@
 #include "args.h"
 #include <vector>
 #include <sstream>
+#include "common.h"
 
-InitialOptions parseInitialArgs(int argc, char* argv[]) {
+InitialArgs parseInitialArgs(int argc, char* argv[]) {
     const std::string helpMessage = "Usage: " + std::string(argv[0]) + " <option(s)>" + NL
         + "Options:" + NL
         + TAB + "-w NUMBER_OF_WORKERS" + TAB + "The number of workers to use" + NL
@@ -17,7 +18,7 @@ InitialOptions parseInitialArgs(int argc, char* argv[]) {
     if (argc <= 1)
         throw helpMessage;
 
-    InitialOptions opts;
+    InitialArgs args;
     int c;
 
     while ((c = getopt(argc, argv, "w:b:i:h")) != -1)
@@ -25,48 +26,19 @@ InitialOptions parseInitialArgs(int argc, char* argv[]) {
         switch (c)
         {
         case 'w':
-            opts.numWorkers = std::stoi(optarg);
+            args.numWorkers = std::stoi(optarg);
             break;
         case 'b':
-            opts.bufferSize = std::stoi(optarg);
+            args.bufferSize = std::stoi(optarg);
             break;
         case 'i':
-            opts.inputDir = optarg;
+            args.inputDir = optarg;
             break;
         default:
-            std::cout << helpMessage << std::endl;
-            std::abort();
+            throw helpMessage;
         }
     }
-    return opts;
-}
-
-DiseaseFrequencyOptions parseDiseaseFrequencyArgs(std::vector<std::string> args)
-{
-    const std::string helpMessage = "Usage: " + std::string(args[0]) + " virusName startDate endDate [country]";
-    if (args.size() < 4)
-        throw std::runtime_error(helpMessage);
-
-    DiseaseFrequencyOptions opts = {.virusName = args[1], .startDate = args[2], .endDate = args[3]};
-
-    if (args.size() > 5)
-    {
-        opts.country = args[4];
-    }
-
-    return opts;
-}
-
-SearchPatientRecordOptions parseSearchPatientRecordArgs(std::vector<std::string> args)
-{
-    const std::string helpMessage = "Usage: " + std::string(args[0]) + " recordID";
-
-    if (args.size() < 2)
-        throw std::runtime_error(helpMessage);
-
-    SearchPatientRecordOptions opts = {.recordID = args[1]};
-
-    return opts;
+    return args;
 }
 
 std::map<std::string, Command> commandRegistry = {
@@ -75,28 +47,17 @@ std::map<std::string, Command> commandRegistry = {
     {"exit", Command::Exit},
 };
 
-std::tuple<Command, Options> parseInputString(std::string inputString)
+std::tuple<Command, Request> parseCommand(std::string inputString)
 {
-    Command command;
-
-    std::vector<std::string> args;
     std::stringstream inputStream(inputString);
-    std::string arg;
-    while (std::getline(inputStream, arg, ' '))
-        args.push_back(arg);
+    std::string commandString, rest;
+    inputStream >> commandString >> rest;
 
-    if (!args.empty() && commandRegistry.contains(args[0]))
+    if (!inputString.empty() && commandRegistry.contains(commandString))
     {
-        command = commandRegistry[args[0]];
-        switch (command)
-        {
-        case Command::DiseaseFrequency:
-            return std::make_tuple(command, parseDiseaseFrequencyArgs(args));
-        case Command::SearchPatientRecord:
-            return std::make_tuple(command, parseSearchPatientRecordArgs(args));
-        case Command::Exit:
-            return std::make_tuple(command, ExitOptions());
-        }
+        Command command = commandRegistry[commandString];
+        Deserializer<Request> deserializer = getRequestDeserializer(command);
+        return std::make_tuple(command, deserializer(rest));
     }
     throw std::runtime_error("Invalid command!");
 }

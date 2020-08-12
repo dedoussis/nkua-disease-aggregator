@@ -1,60 +1,20 @@
 #ifndef ARGS_H
 #define ARGS_H
 
-#include <iostream>
-#include <map>
-#include <variant>
-#include <vector>
+#include "common.h"
 
 const std::string NL = "\n";
 const std::string TAB = "\t";
 
-struct InitialOptions
+
+struct InitialArgs
 {
     std::string inputDir;
     int bufferSize, numWorkers;
 };
 
-struct DiseaseFrequencyOptions
-{
-    std::string virusName, startDate, endDate, country;
-};
+InitialArgs parseInitialArgs(int argc, char *argv[]);
 
-struct TopKAgeRangesOptions
-{
-    int k;
-    std::string country, disease, startDate, endDate;
-};
-
-struct SearchPatientRecordOptions
-{
-    std::string recordID;
-};
-
-struct NumPatientAdmissionsOptions
-{
-    std::string virusName, startDate, endDate, country;
-};
-
-struct ExitOptions
-{
-};
-
-enum class Command
-{
-    DiseaseFrequency,
-    SearchPatientRecord,
-    Exit,
-};
-
-InitialOptions parseInitialArgs(int argc, char *argv[]);
-DiseaseFrequencyOptions parseDiseaseFrequencyArgs(std::vector<std::string> args);
-SearchPatientRecordOptions parseSearchPatientRecordArgs(std::vector<std::string> args);
-
-using Options = std::variant<DiseaseFrequencyOptions, SearchPatientRecordOptions, ExitOptions>;
-
-std::tuple<Command, Options> parseInputString(std::string inputString);
-
-using option_parser = Options (*)(std::vector<std::string>);
+std::tuple<Command, Request> parseCommand(std::string inputString);
 
 #endif
