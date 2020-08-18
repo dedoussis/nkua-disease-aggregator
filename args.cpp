@@ -1,11 +1,9 @@
-
-#include <unistd.h>
+#include "args.h"
+#include "common.h"
 #include <iostream>
 #include <map>
-#include "args.h"
+#include <unistd.h>
 #include <vector>
-#include <sstream>
-#include "common.h"
 
 InitialArgs parseInitialArgs(int argc, char* argv[]) {
     const std::string helpMessage = "Usage: " + std::string(argv[0]) + " <option(s)>" + NL
@@ -49,9 +47,8 @@ std::map<std::string, Command> commandRegistry = {
 
 std::tuple<Command, Request> parseCommand(std::string inputString)
 {
-    std::stringstream inputStream(inputString);
-    std::string commandString, rest;
-    inputStream >> commandString >> rest;
+    std::string commandString = inputString.substr(0, inputString.find(" "));
+    std::string rest = commandString == inputString ? "" : inputString.substr(commandString.size() + 1);
 
     if (!inputString.empty() && commandRegistry.contains(commandString))
     {

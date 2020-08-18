@@ -4,18 +4,6 @@
 #include <string>
 #include <variant>
 
-inline std::string const &to_string(std::string const &s) { return s; }
-
-template <typename... Args>
-std::string join(Args const &... args)
-{
-    using ::to_string;
-    using std::to_string;
-    std::stringstream out;
-    (out << ... << (to_string(args) + " "));
-    return out.str();
-}
-
 struct RequestSerializer
 {
     std::string operator()(DiseaseFrequencyRequest request)

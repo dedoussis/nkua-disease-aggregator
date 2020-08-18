@@ -1,12 +1,13 @@
+#include "args.h"
+#include "common.h"
+#include "io.h"
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <stdexcept>
 #include <unistd.h>
 #include <vector>
-#include "args.h"
-#include "common.h"
-#include "io.h"
 
 using namespace std;
 
@@ -24,7 +25,7 @@ struct Record
 
     string stringify()
     {
-        return recordID + " " + patientFirstName + " " + patientLastName + " " + disease + " " + to_string(age);
+        return join(recordID, patientFirstName, patientLastName, disease, age);
     }
 };
 
@@ -168,22 +169,22 @@ int main(int argc, char *argv[])
     {
         while (command != Command::Exit)
         {
-            cout << "Enter your command:" << endl;
+            cout << "Enter your command: ";
             string inputString;
             getline(cin, inputString);
             Request request;
-            try 
+            try
             {
                 tie(command, request) = parseCommand(inputString);
             }
-            catch (const std::runtime_error &error)
+            catch (const runtime_error &error)
             {
                 cerr << error.what() << endl;
                 continue;
             }
             string serialized = serialize(request);
 
-            namedPipe.send(serialized);
+            namedPipe.send(command, serialized);
 
             auto [type, output] = namedPipe.receive();
 
@@ -195,13 +196,13 @@ int main(int argc, char *argv[])
         while (command != Command::Exit)
         {
             auto [type, serializedInput] = namedPipe.receive();
-            
+
             Deserializer<Request> deserializer = getRequestDeserializer(type);
             Handler handler = {.loadedRecords = loadedRecords, .summaryStats = summaryStats};
             Request request = deserializer(serializedInput);
             Response response = visit(handler, request);
 
-            namedPipe.send(serialize(response));
+            namedPipe.send(type, serialize(response));
         }
     }
 

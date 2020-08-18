@@ -7,13 +7,13 @@
 
 struct NamedPipe {
     private:
-        const char* path;
-        int bufferSize;
+        const char* m_path;
+        int m_bufferSize;
 
     public:
-        NamedPipe(const char* p, int bs);
+        NamedPipe(const char* path, int bufferSize);
         ~NamedPipe();
-        void send(std::string payload);
+        void send(Command type, std::string payload);
         std::pair<Command, std::string> receive();
 };
 
