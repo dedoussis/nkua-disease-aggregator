@@ -2,10 +2,7 @@
 #define ARGS_H
 
 #include "common.h"
-
-const std::string NL = "\n";
-const std::string TAB = "\t";
-
+#include "external.h"
 
 struct InitialArgs
 {
@@ -15,6 +12,6 @@ struct InitialArgs
 
 InitialArgs parseInitialArgs(int argc, char *argv[]);
 
-std::tuple<Command, Request> parseCommand(std::string inputString);
+std::tuple<Command, External::Request> parseCommand(std::string inputString);
 
 #endif

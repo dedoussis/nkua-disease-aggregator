@@ -1,6 +1,7 @@
-#include "io.h"
+#include "fifo.h"
 #include "common.h"
 #include <fcntl.h>
+#include <iostream>
 #include <stdexcept>
 #include <stdio.h>
 #include <string>
@@ -40,7 +41,6 @@ void writeChunks(int fd, std::vector<std::byte> source, int maxBufferSize, int l
         std::vector<std::byte>::const_iterator chunkStart = source.begin() + allBytes - remainingBytes;
         std::vector<std::byte>::const_iterator chunkEnd = chunkStart + bufferSize;
         const std::vector<std::byte> chunk = std::vector<std::byte>(chunkStart, chunkEnd);
-
         const int writenBytes = write(fd, chunk.data(), bufferSize);
         if (!writenBytes)
             throw std::runtime_error("Length of data is less than expected");
@@ -70,34 +70,39 @@ std::vector<std::byte> toByteVector(Header data)
     return std::vector<std::byte>(dataPtr, dataPtr + sizeof(data));
 }
 
-NamedPipe::NamedPipe(const char *path, int bufferSize)
+Fifo::Fifo(std::string path, int bufferSize)
 {
     m_path = path;
     m_bufferSize = bufferSize;
-    mkfifo(path, 0666);
 }
 
-NamedPipe::~NamedPipe()
+void Fifo::make()
 {
-    unlink(m_path);
+    mkfifo(m_path.c_str(), 0666);
 }
 
-void NamedPipe::send(Command type, std::string payload)
+void Fifo::destroy()
+{
+    unlink(m_path.c_str());
+}
+
+void Fifo::enqueue(Command type, std::string payload)
 {
     Header header = {.type = type, .length = (uint32_t)payload.size()};
 
-    int fd = open(m_path, O_WRONLY);
+    int fd = open(m_path.c_str(), O_WRONLY);
 
     writeChunks(fd, toByteVector(header), m_bufferSize, sizeof(header));
+
     if (header.length)
         writeChunks(fd, toByteVector(payload), m_bufferSize, header.length);
 
     close(fd);
 }
 
-std::pair<Command, std::string> NamedPipe::receive()
+std::pair<Command, std::string> Fifo::dequeue()
 {
-    int fd = open(m_path, O_RDONLY);
+    int fd = open(m_path.c_str(), O_RDONLY);
     std::vector<std::byte> headerBytes = readChunks(fd, m_bufferSize, sizeof(Header));
     Header *header = reinterpret_cast<Header *>(headerBytes.data());
 

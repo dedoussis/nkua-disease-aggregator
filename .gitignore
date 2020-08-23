@@ -3,3 +3,5 @@
 bin
 *.tar.gz
 *.tmp
+log_file.*
+pipe_*

@@ -1,17 +1,39 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <filesystem>
 #include <functional>
+#include <map>
 #include <sstream>
 #include <string>
 #include <variant>
+#include <vector>
+
+enum class RecordType
+{
+    Enter,
+    Exit
+};
+
+struct Record
+{
+    std::string recordID, patientFirstName, patientLastName, disease;
+    int age;
+    RecordType type;
+
+    std::string serialize();
+    static Record deserialize(std::string data);
+};
 
 enum class Command
 {
+    SummaryStatistics,
     SearchPatientRecord,
     DiseaseFrequency,
     Exit
 };
+
+std::vector<std::string> split(const std::string &s, char delimeter = ' ');
 
 template <typename T>
 inline std::string join(const T &t)
@@ -29,35 +51,19 @@ inline std::string join(const T &first, Args... args)
     return firstJoined.empty() ? argsJoined : firstJoined + " " + argsJoined;
 }
 
-struct DiseaseFrequencyRequest
-{
-    std::string virusName, startDate, endDate, country;
-};
-
-struct SearchPatientRecordRequest
-{
-    std::string recordID;
-};
-
-struct ExitRequest
-{
-};
-
-struct PrintableResponse
-{
-    std::string data;
-};
-
 template <typename T>
 using Deserializer = std::function<T(std::string)>;
 
-using Request = std::variant<DiseaseFrequencyRequest, SearchPatientRecordRequest, ExitRequest>;
-using Response = std::variant<PrintableResponse>;
 
-std::string serialize(Request object);
-std::string serialize(Response object);
+using Range = std::tuple<int, int>;
+using Stats = std::map<Range, int>;
+using DiseaseStats = std::map<std::string, Stats>;
+using SummaryStats = std::map<std::string, std::map<std::string, DiseaseStats>>;
 
-Deserializer<Request> getRequestDeserializer(Command type);
-Deserializer<Response> getResponseDeserializer(Command type);
+using DatedRecords = std::map<std::string, std::vector<Record>>;
+using Records = std::map<std::string, DatedRecords>;
+
+const char NL = '\n';
+const char TAB = '\t';
 
 #endif

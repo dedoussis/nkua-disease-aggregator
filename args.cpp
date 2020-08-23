@@ -1,5 +1,6 @@
 #include "args.h"
 #include "common.h"
+#include "external.h"
 #include <iostream>
 #include <map>
 #include <unistd.h>
@@ -45,7 +46,7 @@ std::map<std::string, Command> commandRegistry = {
     {"exit", Command::Exit},
 };
 
-std::tuple<Command, Request> parseCommand(std::string inputString)
+std::tuple<Command, External::Request> parseCommand(std::string inputString)
 {
     std::string commandString = inputString.substr(0, inputString.find(" "));
     std::string rest = commandString == inputString ? "" : inputString.substr(commandString.size() + 1);
@@ -53,7 +54,7 @@ std::tuple<Command, Request> parseCommand(std::string inputString)
     if (!inputString.empty() && commandRegistry.contains(commandString))
     {
         Command command = commandRegistry[commandString];
-        Deserializer<Request> deserializer = getRequestDeserializer(command);
+        Deserializer<External::Request> deserializer = External::getRequestDeserializer(command);
         return std::make_tuple(command, deserializer(rest));
     }
     throw std::runtime_error("Invalid command!");
