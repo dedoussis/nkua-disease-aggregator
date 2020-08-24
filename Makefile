@@ -21,4 +21,4 @@ run: build
 	$(TARGET_DIR)/$(PROGRAM) -w 3 -b 2 -i input_dir
 
 docker-run:
-	docker run -it -v "$(shell pwd):/app/" -w /app/ gcc make run
+	docker run --rm -it -v "$(shell pwd):/app/" -w /app/ gcc make run

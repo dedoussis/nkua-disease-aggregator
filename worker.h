@@ -6,27 +6,43 @@
 #include <filesystem>
 #include <string>
 
+struct WorkerSettings
+{
+protected:
+    Fifo m_queue;
+    pid_t m_pid;
+
+public:
+    Fifo getQueue() const;
+    void setQueue(Fifo queue);
+    pid_t getPid() const;
+    void setPid(pid_t pid);
+};
 struct WorkerData
 {
     Records records;
     SummaryStats summaryStats;
 };
 
-struct Worker
+struct Worker : WorkerSettings
 {
 private:
-    Fifo m_queue;
-    pid_t m_pid;
+    WorkerData m_data;
+    Worker(){};
 
 public:
-    WorkerData data;
-    Worker() = default;
+    static Worker &getInstance()
+    {
+        static Worker instance;
+        return instance;
+    }
+    Worker(Worker const &) = delete;
+    void operator=(Worker const &) = delete;
     void start();
     void stop();
-    Fifo getQueue() const;
-    void setQueue(Fifo queue);
-    pid_t getPid() const;
-    void setPid(pid_t pid);
+    WorkerData getData() const;
+    void setData(WorkerData data);
+    void setSettings(WorkerSettings settings);
 };
 
 #endif

@@ -9,11 +9,11 @@
 struct Aggregator
 {
 private:
-    std::vector<Worker> workers;
+    std::vector<WorkerSettings> workers;
 
 public:
     ~Aggregator();
-    void addWorker(Worker worker);
+    void addWorker(WorkerSettings worker);
     External::Response operator()(External::SummaryStatisticsRequest request);
     External::Response operator()(External::DiseaseFrequencyRequest request);
     External::Response operator()(External::SearchPatientRecordRequest request);

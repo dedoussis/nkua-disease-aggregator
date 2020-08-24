@@ -3,6 +3,7 @@
 #include "internal.h"
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <signal.h>
 #include <string>
 #include <unistd.h>
@@ -65,12 +66,20 @@ std::string generateReport(std::string date, std::string country, DiseaseStats d
     return report;
 }
 
+template <typename T>
+using Setter = std::function<void(T)>;
+
+template <typename T>
+using Getter = std::function<T()>;
+
 struct Handler
 {
-    Worker *worker;
+    Getter<WorkerData> dataGetter;
+    Setter<WorkerData> dataSetter;
 
     Internal::Response operator()(Internal::SummaryStatisticsRequest request)
     {
+        WorkerData data;
         Internal::RenderedResponse res;
         for (auto countryPath : request.filePaths)
         {
@@ -84,12 +93,13 @@ struct Handler
                     std::vector<Record> fileRecords = parseFileRecords(datePath);
                     DiseaseStats fileStats = generateSummaryStats(fileRecords);
 
-                    worker->data.summaryStats[date][country] = fileStats;
-                    worker->data.records[country][date] = fileRecords;
+                    data.summaryStats[date][country] = fileStats;
+                    data.records[country][date] = fileRecords;
                     res.renderedString += generateReport(date, country, fileStats);
                 }
             }
         }
+        dataSetter(data);
         return res;
     }
 
@@ -102,7 +112,7 @@ struct Handler
     Internal::Response operator()(Internal::SearchPatientRecordRequest request)
     {
         Internal::SearchPatientRecordResponse response;
-        for (auto const &[country, datedRecords] : worker->data.records)
+        for (auto const &[country, datedRecords] : dataGetter().records)
         {
             for (auto const &[date, records] : datedRecords)
             {
@@ -124,7 +134,7 @@ void Worker::stop()
 {
     std::string outFileName = "log_file." + std::to_string(getPid());
     std::ofstream outFile(outFileName);
-    for (const auto &kvPair : data.records)
+    for (const auto &kvPair : m_data.records)
         outFile << kvPair.first << std::endl;
 
     Internal::ExitResponse response = {.logFile = outFileName};
@@ -133,12 +143,9 @@ void Worker::stop()
     exit(0);
 }
 
-Worker *currentWorker;
-
 void Worker::start()
 {
-    currentWorker = this;
-    signal(SIGQUIT, [](int sig) { currentWorker->stop(); });
+    signal(SIGQUIT, [](int sig) { Worker::getInstance().stop(); });
 
     for (;;)
     {
@@ -146,29 +153,47 @@ void Worker::start()
 
         Deserializer<Internal::Request> deserializer = Internal::getRequestDeserializer(type);
         Internal::Request request = deserializer(serializedInput);
-        Handler handler = {.worker = this};
+        Handler handler = {
+            .dataGetter = [this]() { return this->getData(); },
+            .dataSetter = [this](WorkerData data) { this->setData(data); }};
         Internal::Response response = visit(handler, request);
 
         m_queue.enqueue(type, Internal::serialize(response));
     }
 }
 
-Fifo Worker::getQueue() const
+Fifo WorkerSettings::getQueue() const
 {
     return m_queue;
 }
 
-void Worker::setQueue(Fifo queue)
+void WorkerSettings::setQueue(Fifo queue)
 {
     m_queue = queue;
 }
 
-pid_t Worker::getPid() const
+pid_t WorkerSettings::getPid() const
 {
     return m_pid;
 }
 
-void Worker::setPid(pid_t pid)
+void WorkerSettings::setPid(pid_t pid)
 {
     m_pid = pid;
+}
+
+void Worker::setSettings(WorkerSettings settings)
+{
+    setPid(settings.getPid());
+    setQueue(settings.getQueue());
+}
+
+WorkerData Worker::getData() const
+{
+    return m_data;
+}
+
+void Worker::setData(WorkerData data)
+{
+    m_data = data;
 }

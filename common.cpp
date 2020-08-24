@@ -21,12 +21,12 @@ std::string Record::serialize()
     return join(recordID, patientFirstName, patientLastName, disease, age);
 }
 
- Record Record::deserialize(std::string data)
- {
+Record Record::deserialize(std::string data)
+{
     std::stringstream dataStream(data);
     Record record;
     std::string ageString;
     dataStream >> record.recordID >> record.patientFirstName >> record.patientLastName >> record.disease >> ageString;
     record.age = std::stoi(ageString);
     return record;
- }
+}

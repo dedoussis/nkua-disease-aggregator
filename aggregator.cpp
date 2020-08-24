@@ -20,7 +20,7 @@ inline std::vector<T> extendVector(std::vector<T> v1, std::vector<T> v2)
     return extended;
 }
 
-void Aggregator::addWorker(Worker worker)
+void Aggregator::addWorker(WorkerSettings worker)
 {
     workers.push_back(worker);
 }
@@ -48,12 +48,16 @@ External::Response Aggregator::operator()(External::SummaryStatisticsRequest req
 
     for (size_t i = 0; i < grouppedVector.size(); i++)
     {
-        Worker worker = workers[i];
+        WorkerSettings worker = workers[i];
         Internal::SummaryStatisticsRequest workerRequest = {.filePaths = grouppedVector[i]};
         worker.getQueue().enqueue(Command::SummaryStatistics, Internal::serialize(workerRequest));
+    }
+
+    for (auto worker: workers) {
         auto [type, output] = worker.getQueue().dequeue();
         response.renderedString += output;
     }
+
     return response;
 }
 
@@ -71,6 +75,10 @@ External::Response Aggregator::operator()(External::SearchPatientRecordRequest r
     {
         Internal::SearchPatientRecordRequest workerRequest = {.recordID = request.recordID};
         worker.getQueue().enqueue(Command::SearchPatientRecord, Internal::serialize(workerRequest));
+    }
+
+    for (auto worker : workers)
+    {
         auto [type, output] = worker.getQueue().dequeue();
         Internal::SearchPatientRecordResponse workerResponse = Internal::searchPatientRecordResponseDeserialize(output);
         response.records = extendVector<Record>(response.records, workerResponse.records);

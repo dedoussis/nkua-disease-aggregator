@@ -1,12 +1,13 @@
 #include "aggregator.h"
 #include "args.h"
 #include "common.h"
+#include "external.h"
 #include "fifo.h"
 #include "worker.h"
-#include "external.h"
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>
+#include <unistd.h>
 #include <variant>
 
 using namespace std;
@@ -64,17 +65,19 @@ int main(int argc, char *argv[])
     for (int i = 0; i < args.numWorkers; ++i)
     {
         Fifo queue("pipe_" + to_string(i), args.bufferSize);
-        Worker worker;
-        worker.setQueue(queue);
-        worker.getQueue().make();
+        WorkerSettings workerSettings;
+        workerSettings.setQueue(queue);
+        workerSettings.getQueue().make();
         if (pid_t pid = fork())
         {
-            worker.setPid(pid);
-            aggregator.addWorker(worker);
+            workerSettings.setPid(pid);
+            aggregator.addWorker(workerSettings);
         }
         else
         {
-            worker.setPid(getpid());
+            workerSettings.setPid(getpid());
+            Worker &worker = Worker::getInstance();
+            worker.setSettings(workerSettings);
             worker.start();
             return 0;
         }
