@@ -28,6 +28,7 @@ public:
     External::Response operator()(External::SummaryStatisticsRequest &request);
     External::Response operator()(External::DiseaseFrequencyRequest &request);
     External::Response operator()(External::SearchPatientRecordRequest &request);
+    External::Response operator()(External::ListCountriesRequest &request);
     External::Response operator()(External::ExitRequest &request);
 };
 

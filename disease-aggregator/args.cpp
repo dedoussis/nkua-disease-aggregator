@@ -44,7 +44,7 @@ std::map<std::string, Command> commandRegistry = {
     {"diseaseFrequency", Command::DiseaseFrequency},
     {"searchPatientRecord", Command::SearchPatientRecord},
     {"exit", Command::Exit},
-};
+    {"listCountries", Command::ListCountries}};
 
 std::tuple<Command, External::Request> parseCommand(std::string inputString)
 {

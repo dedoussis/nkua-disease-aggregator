@@ -78,6 +78,16 @@ External::Response Aggregator::operator()(External::SearchPatientRecordRequest &
     return response;
 }
 
+External::Response Aggregator::operator()(External::ListCountriesRequest &request)
+{
+    External::ListCountriesResponse response;
+
+    for (auto const &[country, workerIdx] : countryMap)
+        response.countries.push_back(std::make_pair(country, workers[workerIdx].getPid()));
+
+    return response;
+}
+
 External::Response Aggregator::operator()(External::ExitRequest &request)
 {
     External::ExitResponse response;

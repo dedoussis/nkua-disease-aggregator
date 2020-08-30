@@ -21,9 +21,12 @@ namespace External
         std::string recordID;
     };
 
+    struct ListCountriesRequest
+    {
+    };
+
     struct ExitRequest
     {
-        std::string recordID;
     };
 
     struct RenderedResponse
@@ -36,13 +39,18 @@ namespace External
         std::vector<Record> records;
     };
 
+    struct ListCountriesResponse
+    {
+        std::vector<std::pair<std::string, pid_t>> countries;
+    };
+
     struct ExitResponse
     {
         std::vector<std::pair<pid_t, std::string>> killedWorkers;
     };
 
-    using Request = std::variant<DiseaseFrequencyRequest, SearchPatientRecordRequest, SummaryStatisticsRequest, ExitRequest>;
-    using Response = std::variant<RenderedResponse, SearchPatientRecordResponse, ExitResponse>;
+    using Request = std::variant<DiseaseFrequencyRequest, SearchPatientRecordRequest, SummaryStatisticsRequest, ListCountriesRequest, ExitRequest>;
+    using Response = std::variant<RenderedResponse, SearchPatientRecordResponse, ListCountriesResponse, ExitResponse>;
 
     std::string serialize(Response object);
 

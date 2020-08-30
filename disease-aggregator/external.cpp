@@ -7,12 +7,12 @@ namespace External
 {
     struct ResponseSerializer
     {
-        std::string operator()(RenderedResponse& response)
+        std::string operator()(RenderedResponse &response)
         {
             return response.renderedString;
         }
 
-        std::string operator()(SearchPatientRecordResponse& response)
+        std::string operator()(SearchPatientRecordResponse &response)
         {
             std::string serialized = join("Patients found:", response.records.size()) + NL;
 
@@ -22,7 +22,7 @@ namespace External
             return serialized;
         }
 
-        std::string operator()(ExitResponse& response)
+        std::string operator()(ExitResponse &response)
         {
             std::string serliazed;
 
@@ -31,6 +31,15 @@ namespace External
 
             serliazed += "Bye! 👋";
             return serliazed;
+        }
+
+        std::string operator()(ListCountriesResponse &response)
+        {
+            std::string serialized;
+            for (auto [country, pid] : response.countries)
+                serialized += join(country, "- PID:", pid) + NL;
+
+            return serialized;
         }
     };
 
@@ -69,16 +78,12 @@ namespace External
         return request;
     }
 
-    ExitRequest exitRequestDeserialize(std::string payload)
-    {
-        return ExitRequest();
-    }
-
     std::map<Command, Deserializer<Request>> requestDeserializerRegistry = {
         {Command::DiseaseFrequency, deseaseFrequencyRequestDeserialize},
         {Command::SearchPatientRecord, searchPatientRecordRequestDeserialize},
         {Command::SummaryStatistics, summaryStatisticsRequestDeserialize},
-        {Command::Exit, exitRequestDeserialize}};
+        {Command::ListCountries, [](std::string _) { return ListCountriesRequest(); }},
+        {Command::Exit, [](std::string _) { return ExitRequest(); }}};
 
     Deserializer<Request> getRequestDeserializer(Command type)
     {
