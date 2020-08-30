@@ -11,14 +11,14 @@ clean:
 	rm -rf $(TARGET_DIR)
 
 distrib:
-	tar -czf $(PROGRAM).tar.gz $(PROGRAM) Makefile
+	tar -czf $(PROGRAM).tar.gz $(PROGRAM) Makefile *.sh
 
 $(PROGRAM): $(PROGRAM)/**
 	mkdir $(TARGET_DIR)
 	g++ $(PROGRAM)/** $(CXXFLAGS) $(OPTIMIZATION) -o $(TARGET_DIR)/$(PROGRAM)
 
 run: build
-	$(TARGET_DIR)/$(PROGRAM) -w 3 -b 2 -i input_dir
+	$(TARGET_DIR)/$(PROGRAM) -w 3 -b 2 -i input_dir.tmp
 
 docker-run:
 	docker run --rm -it -v "$(shell pwd):/app/" -w /app/ gcc make run
