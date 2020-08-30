@@ -10,7 +10,9 @@
 #include <variant>
 #include <vector>
 
-std::vector<Record> parseFileRecords(std::filesystem::path filePath)
+namespace fs = std::filesystem;
+
+std::vector<Record> parseFileRecords(fs::path filePath)
 {
     std::ifstream infile(filePath);
 
@@ -58,7 +60,7 @@ std::string generateReport(std::string date, std::string country, DiseaseStats d
         {
             auto [min, max] = range;
             int count = stats.contains(range) ? stats[range] : 0;
-            report += "Age range " + std::to_string(min) + "-" + std::to_string(max) + " years: " + std::to_string(count) + " cases" + NL;
+            report += join("Age range", min, "-", max, "years:", count, "cases") + NL;
         }
 
         report += NL;
@@ -77,18 +79,19 @@ struct Handler
     Getter<WorkerData> dataGetter;
     Setter<WorkerData> dataSetter;
 
-    Internal::Response operator()(Internal::SummaryStatisticsRequest request)
+    Internal::Response operator()(Internal::SummaryStatisticsRequest &request)
     {
         WorkerData data;
-        Internal::RenderedResponse res;
+        Internal::SummaryStatisticsResponse res;
         for (auto countryPath : request.filePaths)
         {
-            for (auto &dateDirEntry : std::filesystem::directory_iterator(countryPath))
+            std::string country = countryPath.filename().string();
+            res.countries.push_back(country);
+            for (auto &dateDirEntry : fs::directory_iterator(countryPath))
             {
-                if (std::filesystem::is_regular_file(dateDirEntry))
+                if (fs::is_regular_file(dateDirEntry))
                 {
-                    std::filesystem::path datePath = dateDirEntry.path();
-                    std::string country = countryPath.filename().string();
+                    fs::path datePath = dateDirEntry.path();
                     std::string date = datePath.filename().string();
                     std::vector<Record> fileRecords = parseFileRecords(datePath);
                     DiseaseStats fileStats = generateSummaryStats(fileRecords);
@@ -103,13 +106,13 @@ struct Handler
         return res;
     }
 
-    Internal::Response operator()(Internal::DiseaseFrequencyRequest request)
+    Internal::Response operator()(Internal::DiseaseFrequencyRequest &request)
     {
         Internal::RenderedResponse res;
         res.renderedString = "Computing disease frequency for dieasease: " + request.virusName;
         return res;
     }
-    Internal::Response operator()(Internal::SearchPatientRecordRequest request)
+    Internal::Response operator()(Internal::SearchPatientRecordRequest &request)
     {
         Internal::SearchPatientRecordResponse response;
         for (auto const &[country, datedRecords] : dataGetter().records)

@@ -51,11 +51,10 @@ std::tuple<Command, External::Request> parseCommand(std::string inputString)
     std::string commandString = inputString.substr(0, inputString.find(" "));
     std::string rest = commandString == inputString ? "" : inputString.substr(commandString.size() + 1);
 
-    if (!inputString.empty() && commandRegistry.contains(commandString))
-    {
-        Command command = commandRegistry[commandString];
-        Deserializer<External::Request> deserializer = External::getRequestDeserializer(command);
-        return std::make_tuple(command, deserializer(rest));
-    }
-    throw std::runtime_error("Invalid command!");
+    if (inputString.empty() || !commandRegistry.contains(commandString))
+        throw std::runtime_error("Invalid command!");
+
+    Command command = commandRegistry[commandString];
+    Deserializer<External::Request> deserializer = External::getRequestDeserializer(command);
+    return std::make_tuple(command, deserializer(rest));
 }

@@ -7,14 +7,14 @@ namespace External
 {
     struct ResponseSerializer
     {
-        std::string operator()(RenderedResponse response)
+        std::string operator()(RenderedResponse& response)
         {
             return response.renderedString;
         }
 
-        std::string operator()(SearchPatientRecordResponse response)
+        std::string operator()(SearchPatientRecordResponse& response)
         {
-            std::string serialized = "Patients found: " + std::to_string(response.records.size()) + NL;
+            std::string serialized = join("Patients found:", response.records.size()) + NL;
 
             for (auto record : response.records)
                 serialized += record.serialize() + NL;
@@ -22,12 +22,12 @@ namespace External
             return serialized;
         }
 
-        std::string operator()(ExitResponse response)
+        std::string operator()(ExitResponse& response)
         {
             std::string serliazed;
 
             for (auto [pid, logFile] : response.killedWorkers)
-                serliazed += "Worker " + std::to_string(pid) + " has been killed - Log file: " + logFile + NL;
+                serliazed += join("Worker", pid, "has been killed - Log file:", logFile) + NL;
 
             serliazed += "Bye! 👋";
             return serliazed;

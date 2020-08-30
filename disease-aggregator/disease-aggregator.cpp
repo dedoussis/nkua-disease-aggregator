@@ -25,12 +25,11 @@ External::SummaryStatisticsRequest generateSummaryStatisticsRequest(string input
 
 int startCommandInterface(Aggregator aggregator, External::Request initialRequest)
 {
-    int inputCounter = 0;
     Command command = Command::SummaryStatistics;
     External::Request request = initialRequest;
     while (command != Command::Exit)
     {
-        if (inputCounter)
+        if (aggregator.isInitialised())
         {
             cout << "Enter your command: ";
             string inputString;
@@ -49,7 +48,6 @@ int startCommandInterface(Aggregator aggregator, External::Request initialReques
         External::Response response = visit(aggregator, request);
 
         cout << External::serialize(response) << endl;
-        inputCounter++;
     }
 
     return 0;

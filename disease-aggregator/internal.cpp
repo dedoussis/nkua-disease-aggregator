@@ -7,17 +7,17 @@ namespace Internal
 {
     struct RequestSerializer
     {
-        std::string operator()(DiseaseFrequencyRequest request)
+        std::string operator()(DiseaseFrequencyRequest &request)
         {
             return join(request.virusName, request.startDate, request.endDate, request.country);
         }
 
-        std::string operator()(SearchPatientRecordRequest request)
+        std::string operator()(SearchPatientRecordRequest &request)
         {
             return request.recordID;
         }
 
-        std::string operator()(SummaryStatisticsRequest request)
+        std::string operator()(SummaryStatisticsRequest &request)
         {
             std::string serialized;
             for (auto filePath : request.filePaths)
@@ -28,12 +28,12 @@ namespace Internal
 
     struct ResponseSerializer
     {
-        std::string operator()(RenderedResponse response)
+        std::string operator()(RenderedResponse &response)
         {
             return response.renderedString;
         }
 
-        std::string operator()(SearchPatientRecordResponse response)
+        std::string operator()(SearchPatientRecordResponse &response)
         {
             std::string serialized;
 
@@ -46,7 +46,17 @@ namespace Internal
             return serialized.substr(0, serialized.size() - 1);
         }
 
-        std::string operator()(ExitResponse response)
+        std::string operator()(SummaryStatisticsResponse &response)
+        {
+            std::string serialized;
+
+            for (auto country : response.countries)
+                serialized = join(serialized, country);
+
+            return serialized + VTAB + response.renderedString;
+        }
+
+        std::string operator()(ExitResponse &response)
         {
             return response.logFile;
         }
@@ -107,6 +117,15 @@ namespace Internal
         return response;
     }
 
+    SummaryStatisticsResponse summaryStatisticsResponseDeserialize(std::string payload)
+    {
+        SummaryStatisticsResponse response;
+        auto payloadVector = split(payload, VTAB);
+        response.countries = split(payloadVector[0]);
+        response.renderedString = payloadVector[1];
+        return response;
+    }
+
     ExitResponse exitResponseDeserialize(std::string payload)
     {
         ExitResponse response = {.logFile = payload};
@@ -122,7 +141,7 @@ namespace Internal
         {Command::DiseaseFrequency, renderedResponseDeserialize},
         {Command::SearchPatientRecord, searchPatientRecordResponseDeserialize},
         {Command::Exit, exitResponseDeserialize},
-        {Command::SummaryStatistics, renderedResponseDeserialize}};
+        {Command::SummaryStatistics, summaryStatisticsResponseDeserialize}};
 
     Deserializer<Request> getRequestDeserializer(Command type)
     {

@@ -11,28 +11,9 @@
 
 namespace fs = std::filesystem;
 
-template <typename T>
-inline std::vector<T> extendVector(std::vector<T> v1, std::vector<T> v2)
-{
-    std::vector<T> extended(v1);
-    extended.reserve(extended.size() + v2.size());
-    extended.insert(extended.end(), v2.begin(), v2.end());
-    return extended;
-}
-
 void Aggregator::addWorker(WorkerSettings worker)
 {
     workers.push_back(worker);
-}
-
-template <typename Item>
-std::vector<std::vector<Item>> group(std::vector<Item> v, size_t groups)
-{
-    std::vector<std::vector<Item>> grouppedVector(groups);
-    for (size_t i = 0; i < v.size(); i++)
-        grouppedVector[i % groups].push_back(v[i]);
-
-    return grouppedVector;
 }
 
 Aggregator::~Aggregator()
@@ -41,7 +22,12 @@ Aggregator::~Aggregator()
         worker.getQueue().destroy();
 }
 
-External::Response Aggregator::operator()(External::SummaryStatisticsRequest request)
+bool Aggregator::isInitialised()
+{
+    return !countryMap.empty();
+}
+
+External::Response Aggregator::operator()(External::SummaryStatisticsRequest &request)
 {
     External::RenderedResponse response;
     std::vector<std::vector<fs::path>> grouppedVector = group<fs::path>(request.filePaths, workers.size());
@@ -53,21 +39,26 @@ External::Response Aggregator::operator()(External::SummaryStatisticsRequest req
         worker.getQueue().enqueue(Command::SummaryStatistics, Internal::serialize(workerRequest));
     }
 
-    for (auto worker: workers) {
+    for (size_t i = 0; i < workers.size(); i++)
+    {
+        auto worker = workers[i];
         auto [type, output] = worker.getQueue().dequeue();
-        response.renderedString += output;
+        Internal::SummaryStatisticsResponse workerResponse = Internal::summaryStatisticsResponseDeserialize(output);
+        for (auto country : workerResponse.countries)
+            addCountryWorker(country, i);
+        response.renderedString += workerResponse.renderedString;
     }
 
     return response;
 }
 
-External::Response Aggregator::operator()(External::DiseaseFrequencyRequest request)
+External::Response Aggregator::operator()(External::DiseaseFrequencyRequest &request)
 {
-    External::RenderedResponse response = {.renderedString = "Hello from aggregator!"};
+    External::RenderedResponse response = {.renderedString = " TODO - Hello from aggregator!"};
     return response;
 }
 
-External::Response Aggregator::operator()(External::SearchPatientRecordRequest request)
+External::Response Aggregator::operator()(External::SearchPatientRecordRequest &request)
 {
     External::SearchPatientRecordResponse response;
 
@@ -87,7 +78,7 @@ External::Response Aggregator::operator()(External::SearchPatientRecordRequest r
     return response;
 }
 
-External::Response Aggregator::operator()(External::ExitRequest request)
+External::Response Aggregator::operator()(External::ExitRequest &request)
 {
     External::ExitResponse response;
     for (auto worker : workers)

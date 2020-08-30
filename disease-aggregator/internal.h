@@ -31,13 +31,18 @@ namespace Internal
         std::vector<Record> records;
     };
 
+    struct SummaryStatisticsResponse : RenderedResponse
+    {
+        std::vector<std::string> countries;
+    };
+
     struct ExitResponse
     {
         std::string logFile;
     };
 
     using Request = std::variant<DiseaseFrequencyRequest, SearchPatientRecordRequest, SummaryStatisticsRequest>;
-    using Response = std::variant<RenderedResponse, SearchPatientRecordResponse, ExitResponse>;
+    using Response = std::variant<RenderedResponse, SearchPatientRecordResponse, SummaryStatisticsResponse, ExitResponse>;
 
     std::string serialize(Request object);
     std::string serialize(Response object);
@@ -46,6 +51,7 @@ namespace Internal
     Deserializer<Response> getResponseDeserializer(Command type);
 
     SearchPatientRecordResponse searchPatientRecordResponseDeserialize(std::string payload);
+    SummaryStatisticsResponse summaryStatisticsResponseDeserialize(std::string payload);
     ExitResponse exitResponseDeserialize(std::string payload);
 } // namespace Internal
 
