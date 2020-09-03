@@ -9,15 +9,15 @@ namespace External
     {
         std::string operator()(RenderedResponse &response)
         {
-            return response.renderedString;
+            return response.rendered_string;
         }
 
         std::string operator()(SearchPatientRecordResponse &response)
         {
-            std::string serialized = join("Patients found:", response.records.size()) + NL;
+            std::string serialized = Join("Patients found:", response.records.size()) + kNL;
 
             for (auto record : response.records)
-                serialized += record.serialize() + NL;
+                serialized += record.Serialize() + kNL;
 
             return serialized;
         }
@@ -26,8 +26,8 @@ namespace External
         {
             std::string serliazed;
 
-            for (auto [pid, logFile] : response.killedWorkers)
-                serliazed += join("Worker", pid, "has been killed - Log file:", logFile) + NL;
+            for (auto [pid, log_file] : response.killed_workers)
+                serliazed += Join("Worker", pid, "has been killed - Log file:", log_file) + kNL;
 
             serliazed += "Bye! 👋";
             return serliazed;
@@ -37,56 +37,56 @@ namespace External
         {
             std::string serialized;
             for (auto [country, pid] : response.countries)
-                serialized += join(country, "- PID:", pid) + NL;
+                serialized += Join(country, "- PID:", pid) + kNL;
 
             return serialized;
         }
     };
 
-    std::string serialize(Response object)
+    std::string Serialize(Response object)
     {
         return visit(ResponseSerializer(), object);
     }
 
-    DiseaseFrequencyRequest deseaseFrequencyRequestDeserialize(std::string payload)
+    DiseaseFrequencyRequest DiseaseFrequencyRequestDeserialize(std::string payload)
     {
-        std::stringstream payloadStream(payload);
+        std::stringstream payload_stream(payload);
         DiseaseFrequencyRequest req;
 
-        payloadStream >> req.virusName >> req.startDate >> req.endDate >> req.country;
+        payload_stream >> req.virus_name >> req.start_date >> req.end_date >> req.country;
 
         return req;
     }
 
-    SearchPatientRecordRequest searchPatientRecordRequestDeserialize(std::string payload)
+    SearchPatientRecordRequest SearchPatientRecordRequestDeserialize(std::string payload)
     {
-        std::stringstream payloadStream(payload);
+        std::stringstream payload_stream(payload);
         SearchPatientRecordRequest req;
 
-        payloadStream >> req.recordID;
+        payload_stream >> req.record_id;
 
         return req;
     }
 
-    SummaryStatisticsRequest summaryStatisticsRequestDeserialize(std::string payload)
+    SummaryStatisticsRequest SummaryStatisticsRequestDeserialize(std::string payload)
     {
         SummaryStatisticsRequest request;
 
-        for (auto token : split(payload))
-            request.filePaths.push_back(std::filesystem::path(token));
+        for (auto token : Split(payload))
+            request.file_paths.push_back(std::filesystem::path(token));
 
         return request;
     }
 
-    std::map<Command, Deserializer<Request>> requestDeserializerRegistry = {
-        {Command::DiseaseFrequency, deseaseFrequencyRequestDeserialize},
-        {Command::SearchPatientRecord, searchPatientRecordRequestDeserialize},
-        {Command::SummaryStatistics, summaryStatisticsRequestDeserialize},
-        {Command::ListCountries, [](std::string _) { return ListCountriesRequest(); }},
-        {Command::Exit, [](std::string _) { return ExitRequest(); }}};
+    std::map<Command, Deserializer<Request>> request_deserializer_registry = {
+        {Command::kDiseaseFrequency, DiseaseFrequencyRequestDeserialize},
+        {Command::kSearchPatientRecord, SearchPatientRecordRequestDeserialize},
+        {Command::kSummaryStatistics, SummaryStatisticsRequestDeserialize},
+        {Command::kListCountries, [](std::string _) { return ListCountriesRequest(); }},
+        {Command::kExit, [](std::string _) { return ExitRequest(); }}};
 
-    Deserializer<Request> getRequestDeserializer(Command type)
+    Deserializer<Request> GetRequestDeserializer(Command type)
     {
-        return requestDeserializerRegistry[type];
+        return request_deserializer_registry[type];
     }
 } // namespace External

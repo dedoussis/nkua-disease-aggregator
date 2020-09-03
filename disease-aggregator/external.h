@@ -8,17 +8,17 @@ namespace External
 {
     struct SummaryStatisticsRequest
     {
-        std::vector<std::filesystem::path> filePaths;
+        std::vector<std::filesystem::path> file_paths;
     };
 
     struct DiseaseFrequencyRequest
     {
-        std::string virusName, startDate, endDate, country;
+        std::string virus_name, start_date, end_date, country;
     };
 
     struct SearchPatientRecordRequest
     {
-        std::string recordID;
+        std::string record_id;
     };
 
     struct ListCountriesRequest
@@ -31,7 +31,7 @@ namespace External
 
     struct RenderedResponse
     {
-        std::string renderedString;
+        std::string rendered_string;
     };
 
     struct SearchPatientRecordResponse
@@ -46,15 +46,15 @@ namespace External
 
     struct ExitResponse
     {
-        std::vector<std::pair<pid_t, std::string>> killedWorkers;
+        std::vector<std::pair<pid_t, std::string>> killed_workers;
     };
 
     using Request = std::variant<DiseaseFrequencyRequest, SearchPatientRecordRequest, SummaryStatisticsRequest, ListCountriesRequest, ExitRequest>;
     using Response = std::variant<RenderedResponse, SearchPatientRecordResponse, ListCountriesResponse, ExitResponse>;
 
-    std::string serialize(Response object);
+    std::string Serialize(Response object);
 
-    Deserializer<Request> getRequestDeserializer(Command type);
+    Deserializer<Request> GetRequestDeserializer(Command type);
 } // namespace External
 
 #endif

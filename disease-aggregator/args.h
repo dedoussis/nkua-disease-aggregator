@@ -6,12 +6,12 @@
 
 struct InitialArgs
 {
-    std::string inputDir;
-    int bufferSize, numWorkers;
+    std::string input_dir;
+    int buffer_size, num_workers;
 };
 
-InitialArgs parseInitialArgs(int argc, char *argv[]);
+InitialArgs ParseInitialArgs(int argc, char *argv[]);
 
-std::tuple<Command, External::Request> parseCommand(std::string inputString);
+std::tuple<Command, External::Request> ParseCommand(std::string input_string);
 
 #endif

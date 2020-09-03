@@ -9,40 +9,40 @@
 struct WorkerSettings
 {
 protected:
-    Fifo m_queue;
-    pid_t m_pid;
+    Fifo queue_;
+    pid_t pid_;
 
 public:
-    Fifo getQueue() const;
-    void setQueue(Fifo queue);
-    pid_t getPid() const;
-    void setPid(pid_t pid);
+    Fifo get_queue() const;
+    void set_queue(Fifo queue);
+    pid_t get_pid() const;
+    void set_pid(pid_t pid);
 };
 struct WorkerData
 {
     Records records;
-    SummaryStats summaryStats;
+    SummaryStats summary_stats;
 };
 
 struct Worker : WorkerSettings
 {
 private:
-    WorkerData m_data;
+    WorkerData data_;
     Worker(){};
 
 public:
-    static Worker &getInstance()
+    static Worker &get_instance()
     {
         static Worker instance;
         return instance;
     }
     Worker(Worker const &) = delete;
     void operator=(Worker const &) = delete;
-    void start();
-    void stop();
-    WorkerData getData() const;
-    void setData(WorkerData data);
-    void setSettings(WorkerSettings settings);
+    void Start();
+    void Stop();
+    WorkerData get_data() const;
+    void set_data(WorkerData data);
+    void set_settings(WorkerSettings settings);
 };
 
 #endif

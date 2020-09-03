@@ -12,58 +12,58 @@
 
 namespace fs = std::filesystem;
 
-std::vector<Record> parseFileRecords(fs::path filePath)
+std::vector<Record> ParseFileRecords(fs::path file_path)
 {
-    std::ifstream infile(filePath);
+    std::ifstream infile(file_path);
 
     int age;
-    std::string recordID, type, patientFirstName, patientLastName, disease;
+    std::string record_id, type, patient_first_name, patient_last_name, disease;
 
     std::vector<Record> records;
 
-    while (infile >> recordID >> type >> patientFirstName >> patientLastName >> disease >> age)
+    while (infile >> record_id >> type >> patient_first_name >> patient_last_name >> disease >> age)
     {
-        Record record = {recordID, patientFirstName, patientLastName, disease, age, type == "ENTER" ? RecordType::Enter : RecordType::Exit};
+        Record record = {record_id, patient_first_name, patient_last_name, disease, age, type == "ENTER" ? RecordType::kEnter : RecordType::kExit};
         records.push_back(record);
     }
 
     return records;
 }
 
-const Range RANGES[] = {{0, 20}, {21, 40}, {41, 60}, {61, std::numeric_limits<int>::max()}};
+const Range kRanges[] = {{0, 20}, {21, 40}, {41, 60}, {61, std::numeric_limits<int>::max()}};
 
-DiseaseStats generateSummaryStats(std::vector<Record> records)
+DiseaseStats GenerateSummaryStats(std::vector<Record> records)
 {
-    DiseaseStats diseaseStats;
+    DiseaseStats disease_stats;
     for (auto record : records)
     {
-        for (auto range : RANGES)
+        for (auto range : kRanges)
         {
             auto [min, max] = range;
             if (min <= record.age && record.age <= max)
             {
-                diseaseStats[record.disease][range]++;
+                disease_stats[record.disease][range]++;
                 break;
             }
         }
     }
-    return diseaseStats;
+    return disease_stats;
 }
 
-std::string generateReport(std::string date, std::string country, DiseaseStats diseaseStats)
+std::string GenerateReport(std::string date, std::string country, DiseaseStats disease_stats)
 {
-    std::string report = date + NL + country + NL;
-    for (auto [disease, stats] : diseaseStats)
+    std::string report = date + kNL + country + kNL;
+    for (auto [disease, stats] : disease_stats)
     {
-        report += disease + NL;
-        for (auto range : RANGES)
+        report += disease + kNL;
+        for (auto range : kRanges)
         {
             auto [min, max] = range;
             int count = stats.contains(range) ? stats[range] : 0;
-            report += join("Age range", min, "-", max, "years:", count, "cases") + NL;
+            report += Join("Age range", min, "-", max, "years:", count, "cases") + kNL;
         }
 
-        report += NL;
+        report += kNL;
     }
     return report;
 }
@@ -76,14 +76,14 @@ using Getter = std::function<T()>;
 
 struct Handler
 {
-    Getter<WorkerData> dataGetter;
-    Setter<WorkerData> dataSetter;
+    Getter<WorkerData> data_getter;
+    Setter<WorkerData> data_setter;
 
     Internal::Response operator()(Internal::SummaryStatisticsRequest &request)
     {
         WorkerData data;
         Internal::SummaryStatisticsResponse res;
-        for (auto countryPath : request.filePaths)
+        for (auto countryPath : request.file_paths)
         {
             std::string country = countryPath.filename().string();
             res.countries.push_back(country);
@@ -93,35 +93,35 @@ struct Handler
                 {
                     fs::path datePath = dateDirEntry.path();
                     std::string date = datePath.filename().string();
-                    std::vector<Record> fileRecords = parseFileRecords(datePath);
-                    DiseaseStats fileStats = generateSummaryStats(fileRecords);
+                    std::vector<Record> file_records = ParseFileRecords(datePath);
+                    DiseaseStats file_stats = GenerateSummaryStats(file_records);
 
-                    data.summaryStats[date][country] = fileStats;
-                    data.records[country][date] = fileRecords;
-                    res.renderedString += generateReport(date, country, fileStats);
+                    data.summary_stats[date][country] = file_stats;
+                    data.records[country][date] = file_records;
+                    res.rendered_string += GenerateReport(date, country, file_stats);
                 }
             }
         }
-        dataSetter(data);
+        data_setter(data);
         return res;
     }
 
     Internal::Response operator()(Internal::DiseaseFrequencyRequest &request)
     {
         Internal::RenderedResponse res;
-        res.renderedString = "Computing disease frequency for dieasease: " + request.virusName;
+        res.rendered_string = "Computing disease frequency for dieasease: " + request.virus_name;
         return res;
     }
     Internal::Response operator()(Internal::SearchPatientRecordRequest &request)
     {
         Internal::SearchPatientRecordResponse response;
-        for (auto const &[country, datedRecords] : dataGetter().records)
+        for (auto const &[country, dated_records] : data_getter().records)
         {
-            for (auto const &[date, records] : datedRecords)
+            for (auto const &[date, records] : dated_records)
             {
                 for (auto record : records)
                 {
-                    if (record.recordID == request.recordID)
+                    if (record.record_id == request.record_id)
                     {
                         response.records.push_back(record);
                         return response;
@@ -133,70 +133,70 @@ struct Handler
     }
 };
 
-void Worker::stop()
+void Worker::Stop()
 {
-    std::string outFileName = "log_file." + std::to_string(getPid());
-    std::ofstream outFile(outFileName);
-    for (const auto &kvPair : m_data.records)
-        outFile << kvPair.first << std::endl;
+    std::string out_file_name = "log_file." + std::to_string(get_pid());
+    std::ofstream out_file(out_file_name);
+    for (const auto &kv_pair : data_.records)
+        out_file << kv_pair.first << std::endl;
 
-    Internal::ExitResponse response = {.logFile = outFileName};
-    m_queue.enqueue(Command::Exit, Internal::serialize(response));
+    Internal::ExitResponse response = {.log_file = out_file_name};
+    queue_.Enqueue(Command::kExit, Internal::Serialize(response));
 
     exit(0);
 }
 
-void Worker::start()
+void Worker::Start()
 {
-    signal(SIGQUIT, [](int sig) { Worker::getInstance().stop(); });
+    signal(SIGQUIT, [](int sig) { Worker::get_instance().Stop(); });
 
     for (;;)
     {
-        auto [type, serializedInput] = m_queue.dequeue();
+        auto [type, serializedInput] = queue_.Dequeue();
 
-        Deserializer<Internal::Request> deserializer = Internal::getRequestDeserializer(type);
+        Deserializer<Internal::Request> deserializer = Internal::GetRequestDeserializer(type);
         Internal::Request request = deserializer(serializedInput);
         Handler handler = {
-            .dataGetter = [this]() { return this->getData(); },
-            .dataSetter = [this](WorkerData data) { this->setData(data); }};
+            .data_getter = [this]() { return this->get_data(); },
+            .data_setter = [this](WorkerData data) { this->set_data(data); }};
         Internal::Response response = visit(handler, request);
 
-        m_queue.enqueue(type, Internal::serialize(response));
+        queue_.Enqueue(type, Internal::Serialize(response));
     }
 }
 
-Fifo WorkerSettings::getQueue() const
+Fifo WorkerSettings::get_queue() const
 {
-    return m_queue;
+    return queue_;
 }
 
-void WorkerSettings::setQueue(Fifo queue)
+void WorkerSettings::set_queue(Fifo queue)
 {
-    m_queue = queue;
+    queue_ = queue;
 }
 
-pid_t WorkerSettings::getPid() const
+pid_t WorkerSettings::get_pid() const
 {
-    return m_pid;
+    return pid_;
 }
 
-void WorkerSettings::setPid(pid_t pid)
+void WorkerSettings::set_pid(pid_t pid)
 {
-    m_pid = pid;
+    pid_ = pid;
 }
 
-void Worker::setSettings(WorkerSettings settings)
+void Worker::set_settings(WorkerSettings settings)
 {
-    setPid(settings.getPid());
-    setQueue(settings.getQueue());
+    set_pid(settings.get_pid());
+    set_queue(settings.get_queue());
 }
 
-WorkerData Worker::getData() const
+WorkerData Worker::get_data() const
 {
-    return m_data;
+    return data_;
 }
 
-void Worker::setData(WorkerData data)
+void Worker::set_data(WorkerData data)
 {
-    m_data = data;
+    data_ = data;
 }

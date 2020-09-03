@@ -6,16 +6,16 @@
 #include <unistd.h>
 #include <vector>
 
-InitialArgs parseInitialArgs(int argc, char* argv[]) {
-    const std::string helpMessage = "Usage: " + std::string(argv[0]) + " <option(s)>" + NL
-        + "Options:" + NL
-        + TAB + "-w NUMBER_OF_WORKERS" + TAB + "The number of workers to use" + NL
-        + TAB + "-b BUFFER_SIZE" + TAB + TAB + "The size of the buffer" + NL
-        + TAB + "-i INPUT_DIR" + TAB + TAB + "Directory containing all the input data" + NL
-        + TAB + "-h" + TAB + TAB + TAB + "Show this help message";
+InitialArgs ParseInitialArgs(int argc, char* argv[]) {
+    const std::string help_message = "Usage: " + std::string(argv[0]) + " <option(s)>" + kNL
+        + "Options:" + kNL
+        + kTAB + "-w NUMBER_OF_WORKERS" + kTAB + "The number of workers to use" + kNL
+        + kTAB + "-b BUFFER_SIZE" + kTAB + kTAB + "The size of the buffer" + kNL
+        + kTAB + "-i INPUT_DIR" + kTAB + kTAB + "Directory containing all the input data" + kNL
+        + kTAB + "-h" + kTAB + kTAB + kTAB + "Show this help message";
 
     if (argc <= 1)
-        throw helpMessage;
+        throw help_message;
 
     InitialArgs args;
     int c;
@@ -25,36 +25,36 @@ InitialArgs parseInitialArgs(int argc, char* argv[]) {
         switch (c)
         {
         case 'w':
-            args.numWorkers = std::stoi(optarg);
+            args.num_workers = std::stoi(optarg);
             break;
         case 'b':
-            args.bufferSize = std::stoi(optarg);
+            args.buffer_size = std::stoi(optarg);
             break;
         case 'i':
-            args.inputDir = optarg;
+            args.input_dir = optarg;
             break;
         default:
-            throw helpMessage;
+            throw help_message;
         }
     }
     return args;
 }
 
-std::map<std::string, Command> commandRegistry = {
-    {"diseaseFrequency", Command::DiseaseFrequency},
-    {"searchPatientRecord", Command::SearchPatientRecord},
-    {"exit", Command::Exit},
-    {"listCountries", Command::ListCountries}};
+std::map<std::string, Command> command_registry = {
+    {"diseaseFrequency", Command::kDiseaseFrequency},
+    {"searchPatientRecord", Command::kSearchPatientRecord},
+    {"exit", Command::kExit},
+    {"listCountries", Command::kListCountries}};
 
-std::tuple<Command, External::Request> parseCommand(std::string inputString)
+std::tuple<Command, External::Request> ParseCommand(std::string input_string)
 {
-    std::string commandString = inputString.substr(0, inputString.find(" "));
-    std::string rest = commandString == inputString ? "" : inputString.substr(commandString.size() + 1);
+    std::string command_string = input_string.substr(0, input_string.find(" "));
+    std::string rest = command_string == input_string ? "" : input_string.substr(command_string.size() + 1);
 
-    if (inputString.empty() || !commandRegistry.contains(commandString))
+    if (input_string.empty() || !command_registry.contains(command_string))
         throw std::runtime_error("Invalid command!");
 
-    Command command = commandRegistry[commandString];
-    Deserializer<External::Request> deserializer = External::getRequestDeserializer(command);
+    Command command = command_registry[command_string];
+    Deserializer<External::Request> deserializer = External::GetRequestDeserializer(command);
     return std::make_tuple(command, deserializer(rest));
 }

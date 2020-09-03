@@ -9,19 +9,19 @@ namespace Internal
     {
         std::string operator()(DiseaseFrequencyRequest &request)
         {
-            return join(request.virusName, request.startDate, request.endDate, request.country);
+            return Join(request.virus_name, request.start_date, request.end_date, request.country);
         }
 
         std::string operator()(SearchPatientRecordRequest &request)
         {
-            return request.recordID;
+            return request.record_id;
         }
 
         std::string operator()(SummaryStatisticsRequest &request)
         {
             std::string serialized;
-            for (auto filePath : request.filePaths)
-                serialized = join(serialized, filePath.c_str());
+            for (auto filePath : request.file_paths)
+                serialized = Join(serialized, filePath.c_str());
             return serialized;
         }
     };
@@ -30,7 +30,7 @@ namespace Internal
     {
         std::string operator()(RenderedResponse &response)
         {
-            return response.renderedString;
+            return response.rendered_string;
         }
 
         std::string operator()(SearchPatientRecordResponse &response)
@@ -41,7 +41,7 @@ namespace Internal
                 return serialized;
 
             for (auto record : response.records)
-                serialized += record.serialize() + NL;
+                serialized += record.Serialize() + kNL;
 
             return serialized.substr(0, serialized.size() - 1);
         }
@@ -51,105 +51,105 @@ namespace Internal
             std::string serialized;
 
             for (auto country : response.countries)
-                serialized = join(serialized, country);
+                serialized = Join(serialized, country);
 
-            return serialized + VTAB + response.renderedString;
+            return serialized + kVTAB + response.rendered_string;
         }
 
         std::string operator()(ExitResponse &response)
         {
-            return response.logFile;
+            return response.log_file;
         }
     };
 
-    std::string serialize(Request object)
+    std::string Serialize(Request object)
     {
         return visit(RequestSerializer(), object);
     }
 
-    std::string serialize(Response object)
+    std::string Serialize(Response object)
     {
         return visit(ResponseSerializer(), object);
     }
 
-    DiseaseFrequencyRequest deseaseFrequencyRequestDeserialize(std::string payload)
+    DiseaseFrequencyRequest DiseaseFrequencyRequestDeserialize(std::string payload)
     {
-        std::stringstream payloadStream(payload);
+        std::stringstream payload_stream(payload);
         DiseaseFrequencyRequest req;
 
-        payloadStream >> req.virusName >> req.startDate >> req.endDate >> req.country;
+        payload_stream >> req.virus_name >> req.start_date >> req.end_date >> req.country;
 
         return req;
     }
 
-    SearchPatientRecordRequest searchPatientRecordRequestDeserialize(std::string payload)
+    SearchPatientRecordRequest SearchPatientRecordRequestDeserialize(std::string payload)
     {
-        std::stringstream payloadStream(payload);
+        std::stringstream payload_stream(payload);
         SearchPatientRecordRequest req;
 
-        payloadStream >> req.recordID;
+        payload_stream >> req.record_id;
 
         return req;
     }
 
-    SummaryStatisticsRequest summaryStatisticsRequestDeserialize(std::string payload)
+    SummaryStatisticsRequest SummaryStatisticsRequestDeserialize(std::string payload)
     {
         SummaryStatisticsRequest request;
 
-        for (auto token : split(payload))
-            request.filePaths.push_back(std::filesystem::path(token));
+        for (auto token : Split(payload))
+            request.file_paths.push_back(std::filesystem::path(token));
 
         return request;
     }
 
-    RenderedResponse renderedResponseDeserialize(std::string payload)
+    RenderedResponse RenderedResponseDeserialize(std::string payload)
     {
         return RenderedResponse(payload);
     }
 
-    SearchPatientRecordResponse searchPatientRecordResponseDeserialize(std::string payload)
+    SearchPatientRecordResponse SearchPatientRecordResponseDeserialize(std::string payload)
     {
 
         SearchPatientRecordResponse response;
-        for (auto serializedRecord : split(payload, NL))
-            response.records.push_back(Record::deserialize(serializedRecord));
+        for (auto serialized_record : Split(payload, kNL))
+            response.records.push_back(Record::Deserialize(serialized_record));
 
         return response;
     }
 
-    SummaryStatisticsResponse summaryStatisticsResponseDeserialize(std::string payload)
+    SummaryStatisticsResponse SummaryStatisticsResponseDeserialize(std::string payload)
     {
         SummaryStatisticsResponse response;
-        auto payloadVector = split(payload, VTAB);
-        response.countries = split(payloadVector[0]);
-        response.renderedString = payloadVector[1];
+        auto payload_vector = Split(payload, kVTAB);
+        response.countries = Split(payload_vector[0]);
+        response.rendered_string = payload_vector[1];
         return response;
     }
 
-    ExitResponse exitResponseDeserialize(std::string payload)
+    ExitResponse ExitResponseDeserialize(std::string payload)
     {
-        ExitResponse response = {.logFile = payload};
+        ExitResponse response = {.log_file = payload};
         return response;
     }
 
-    std::map<Command, Deserializer<Request>> requestDeserializerRegistry = {
-        {Command::DiseaseFrequency, deseaseFrequencyRequestDeserialize},
-        {Command::SearchPatientRecord, searchPatientRecordRequestDeserialize},
-        {Command::SummaryStatistics, summaryStatisticsRequestDeserialize}};
+    std::map<Command, Deserializer<Request>> request_deserializer_registry = {
+        {Command::kDiseaseFrequency, DiseaseFrequencyRequestDeserialize},
+        {Command::kSearchPatientRecord, SearchPatientRecordRequestDeserialize},
+        {Command::kSummaryStatistics, SummaryStatisticsRequestDeserialize}};
 
-    std::map<Command, Deserializer<Response>> responseDeserializerRegistry = {
-        {Command::DiseaseFrequency, renderedResponseDeserialize},
-        {Command::SearchPatientRecord, searchPatientRecordResponseDeserialize},
-        {Command::Exit, exitResponseDeserialize},
-        {Command::SummaryStatistics, summaryStatisticsResponseDeserialize}};
+    std::map<Command, Deserializer<Response>> response_deserializer_registry = {
+        {Command::kDiseaseFrequency, RenderedResponseDeserialize},
+        {Command::kSearchPatientRecord, SearchPatientRecordResponseDeserialize},
+        {Command::kExit, ExitResponseDeserialize},
+        {Command::kSummaryStatistics, SummaryStatisticsResponseDeserialize}};
 
-    Deserializer<Request> getRequestDeserializer(Command type)
+    Deserializer<Request> GetRequestDeserializer(Command type)
     {
-        return requestDeserializerRegistry[type];
+        return request_deserializer_registry[type];
     }
 
-    Deserializer<Response> getResponseDeserializer(Command type)
+    Deserializer<Response> GetResponseDeserializer(Command type)
     {
-        return responseDeserializerRegistry[type];
+        return response_deserializer_registry[type];
     }
 } // namespace Internal

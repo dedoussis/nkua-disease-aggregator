@@ -4,7 +4,7 @@
 #include <string>
 #include <variant>
 
-std::vector<std::string> split(const std::string &s, char delimeter)
+std::vector<std::string> Split(const std::string &s, char delimeter)
 {
     std::vector<std::string> tokens;
     std::stringstream ss(s);
@@ -16,17 +16,17 @@ std::vector<std::string> split(const std::string &s, char delimeter)
     return tokens;
 }
 
-std::string Record::serialize()
+std::string Record::Serialize()
 {
-    return join(recordID, patientFirstName, patientLastName, disease, age);
+    return Join(record_id, patient_first_name, patient_last_name, disease, age);
 }
 
-Record Record::deserialize(std::string data)
+Record Record::Deserialize(std::string data)
 {
-    std::stringstream dataStream(data);
+    std::stringstream data_stream(data);
     Record record;
-    std::string ageString;
-    dataStream >> record.recordID >> record.patientFirstName >> record.patientLastName >> record.disease >> ageString;
-    record.age = std::stoi(ageString);
+    std::string age_string;
+    data_stream >> record.record_id >> record.patient_first_name >> record.patient_last_name >> record.disease >> age_string;
+    record.age = std::stoi(age_string);
     return record;
 }

@@ -11,33 +11,33 @@
 
 enum class RecordType
 {
-    Enter,
-    Exit
+    kEnter,
+    kExit
 };
 
 struct Record
 {
-    std::string recordID, patientFirstName, patientLastName, disease;
+    std::string record_id, patient_first_name, patient_last_name, disease;
     int age;
     RecordType type;
 
-    std::string serialize();
-    static Record deserialize(std::string data);
+    std::string Serialize();
+    static Record Deserialize(std::string data);
 };
 
 enum class Command
 {
-    SummaryStatistics,
-    SearchPatientRecord,
-    DiseaseFrequency,
-    ListCountries,
-    Exit
+    kSummaryStatistics,
+    kSearchPatientRecord,
+    kDiseaseFrequency,
+    kListCountries,
+    kExit
 };
 
-std::vector<std::string> split(const std::string &s, char delimeter = ' ');
+std::vector<std::string> Split(const std::string &s, char delimeter = ' ');
 
 template <typename T>
-inline std::string join(const T &t)
+inline std::string Join(const T &t)
 {
     std::stringstream ss;
     ss << t;
@@ -45,15 +45,15 @@ inline std::string join(const T &t)
 }
 
 template <typename T, typename... Args>
-inline std::string join(const T &first, Args... args)
+inline std::string Join(const T &first, Args... args)
 {
-    std::string firstJoined = join(first);
-    std::string argsJoined = join(args...);
-    return firstJoined.empty() ? argsJoined : firstJoined + " " + argsJoined;
+    std::string first_joined = Join(first);
+    std::string args_joined = Join(args...);
+    return first_joined.empty() ? args_joined : first_joined + " " + args_joined;
 }
 
 template <typename T>
-inline std::vector<T> extendVector(std::vector<T> v1, std::vector<T> v2)
+inline std::vector<T> ExtendVector(std::vector<T> v1, std::vector<T> v2)
 {
     std::vector<T> extended(v1);
     extended.reserve(extended.size() + v2.size());
@@ -62,13 +62,13 @@ inline std::vector<T> extendVector(std::vector<T> v1, std::vector<T> v2)
 }
 
 template <typename Item>
-std::vector<std::vector<Item>> group(std::vector<Item> v, size_t groups)
+std::vector<std::vector<Item>> Group(std::vector<Item> v, size_t groups)
 {
-    std::vector<std::vector<Item>> grouppedVector(groups);
+    std::vector<std::vector<Item>> groupped_vector(groups);
     for (size_t i = 0; i < v.size(); i++)
-        grouppedVector[i % groups].push_back(v[i]);
+        groupped_vector[i % groups].push_back(v[i]);
 
-    return grouppedVector;
+    return groupped_vector;
 }
 
 template <typename T>
@@ -82,8 +82,8 @@ using SummaryStats = std::map<std::string, std::map<std::string, DiseaseStats>>;
 using DatedRecords = std::map<std::string, std::vector<Record>>;
 using Records = std::map<std::string, DatedRecords>;
 
-const char NL = '\n';
-const char TAB = '\t';
-const char VTAB = '\v';
+const char kNL = '\n';
+const char kTAB = '\t';
+const char kVTAB = '\v';
 
 #endif

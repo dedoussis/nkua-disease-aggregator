@@ -8,16 +8,16 @@
 struct Fifo
 {
 private:
-    std::string m_path;
-    int m_bufferSize;
+    std::string path_;
+    int buffer_size_;
 
 public:
-    Fifo(std::string path, int bufferSize);
+    Fifo(std::string path, int buffer_size);
     Fifo() = default;
-    void make();
-    void destroy();
-    void enqueue(Command type, std::string payload);
-    std::pair<Command, std::string> dequeue();
+    void Make();
+    void Destroy();
+    void Enqueue(Command type, std::string payload);
+    std::pair<Command, std::string> Dequeue();
 };
 
 #endif

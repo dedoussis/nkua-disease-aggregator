@@ -11,41 +11,41 @@
 #include <utility>
 #include <vector>
 
-std::vector<std::byte> readChunks(int fd, int maxBufferSize, int length)
+std::vector<std::byte> ReadChunks(int fd, int max_buffer_size, int length)
 {
     std::vector<std::byte> destination;
-    int remainingBytes = length + 1;
-    while (remainingBytes)
+    int remaining_bytes = length + 1;
+    while (remaining_bytes)
     {
-        const int bufferSize = remainingBytes < maxBufferSize ? remainingBytes : maxBufferSize;
-        std::vector<std::byte> chunk(bufferSize);
+        const int buffer_size = remaining_bytes < max_buffer_size ? remaining_bytes : max_buffer_size;
+        std::vector<std::byte> chunk(buffer_size);
 
-        const int readBytes = read(fd, chunk.data(), bufferSize);
-        if (!readBytes)
+        const int read_bytes = read(fd, chunk.data(), buffer_size);
+        if (!read_bytes)
             throw std::runtime_error("Length of file is less than expected");
 
         destination.insert(destination.end(), chunk.begin(), chunk.end());
-        remainingBytes -= readBytes;
+        remaining_bytes -= read_bytes;
     }
 
     return destination;
 }
 
-void writeChunks(int fd, std::vector<std::byte> source, int maxBufferSize, int length)
+void WriteChunks(int fd, std::vector<std::byte> source, int max_buffer_size, int length)
 {
-    size_t allBytes = length + 1;
-    int remainingBytes = allBytes;
-    while (remainingBytes)
+    size_t all_bytes = length + 1;
+    int remaining_bytes = all_bytes;
+    while (remaining_bytes)
     {
-        const int bufferSize = remainingBytes < maxBufferSize ? remainingBytes : maxBufferSize;
-        std::vector<std::byte>::const_iterator chunkStart = source.begin() + allBytes - remainingBytes;
-        std::vector<std::byte>::const_iterator chunkEnd = chunkStart + bufferSize;
+        const int buffer_size = remaining_bytes < max_buffer_size ? remaining_bytes : max_buffer_size;
+        std::vector<std::byte>::const_iterator chunkStart = source.begin() + all_bytes - remaining_bytes;
+        std::vector<std::byte>::const_iterator chunkEnd = chunkStart + buffer_size;
         const std::vector<std::byte> chunk = std::vector<std::byte>(chunkStart, chunkEnd);
-        const int writenBytes = write(fd, chunk.data(), bufferSize);
-        if (!writenBytes)
+        const int writen_bytes = write(fd, chunk.data(), buffer_size);
+        if (!writen_bytes)
             throw std::runtime_error("Length of data is less than expected");
 
-        remainingBytes -= writenBytes;
+        remaining_bytes -= writen_bytes;
     }
 }
 
@@ -55,61 +55,61 @@ struct Header
     uint32_t length;
 };
 
-std::vector<std::byte> toByteVector(std::string data)
+std::vector<std::byte> ToByteVector(std::string data)
 {
-    std::vector<std::byte> payloadByteVector;
+    std::vector<std::byte> payload_byte_vector;
     for (auto c : data)
-        payloadByteVector.push_back(std::byte(c));
-    payloadByteVector.push_back(std::byte('\0'));
-    return payloadByteVector;
+        payload_byte_vector.push_back(std::byte(c));
+    payload_byte_vector.push_back(std::byte('\0'));
+    return payload_byte_vector;
 }
 
-std::vector<std::byte> toByteVector(Header data)
+std::vector<std::byte> ToByteVector(Header data)
 {
-    auto dataPtr = reinterpret_cast<std::byte *>(&data);
-    return std::vector<std::byte>(dataPtr, dataPtr + sizeof(data));
+    auto data_ptr = reinterpret_cast<std::byte *>(&data);
+    return std::vector<std::byte>(data_ptr, data_ptr + sizeof(data));
 }
 
-Fifo::Fifo(std::string path, int bufferSize)
+Fifo::Fifo(std::string path, int buffer_size)
 {
-    m_path = path;
-    m_bufferSize = bufferSize;
+    path_ = path;
+    buffer_size_ = buffer_size;
 }
 
-void Fifo::make()
+void Fifo::Make()
 {
-    mkfifo(m_path.c_str(), 0666);
+    mkfifo(path_.c_str(), 0666);
 }
 
-void Fifo::destroy()
+void Fifo::Destroy()
 {
-    unlink(m_path.c_str());
+    unlink(path_.c_str());
 }
 
-void Fifo::enqueue(Command type, std::string payload)
+void Fifo::Enqueue(Command type, std::string payload)
 {
     Header header = {.type = type, .length = (uint32_t)payload.size()};
 
-    int fd = open(m_path.c_str(), O_WRONLY);
+    int fd = open(path_.c_str(), O_WRONLY);
 
-    writeChunks(fd, toByteVector(header), m_bufferSize, sizeof(header));
+    WriteChunks(fd, ToByteVector(header), buffer_size_, sizeof(header));
 
     if (header.length)
-        writeChunks(fd, toByteVector(payload), m_bufferSize, header.length);
+        WriteChunks(fd, ToByteVector(payload), buffer_size_, header.length);
 
     close(fd);
 }
 
-std::pair<Command, std::string> Fifo::dequeue()
+std::pair<Command, std::string> Fifo::Dequeue()
 {
-    int fd = open(m_path.c_str(), O_RDONLY);
-    std::vector<std::byte> headerBytes = readChunks(fd, m_bufferSize, sizeof(Header));
+    int fd = open(path_.c_str(), O_RDONLY);
+    std::vector<std::byte> headerBytes = ReadChunks(fd, buffer_size_, sizeof(Header));
     Header *header = reinterpret_cast<Header *>(headerBytes.data());
 
     if (!header->length)
         return std::make_pair(header->type, std::string());
 
-    std::string payload = (char *)readChunks(fd, m_bufferSize, header->length).data();
+    std::string payload = (char *)ReadChunks(fd, buffer_size_, header->length).data();
 
     close(fd);
 

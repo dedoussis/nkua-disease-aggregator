@@ -12,31 +12,31 @@
 
 using namespace std;
 
-External::SummaryStatisticsRequest generateSummaryStatisticsRequest(string inputDir)
+External::SummaryStatisticsRequest GenerateSummaryStatisticsRequest(string input_dir)
 {
     External::SummaryStatisticsRequest request;
-    for (auto &dirEntry : filesystem::directory_iterator(inputDir))
+    for (auto &dir_entry : filesystem::directory_iterator(input_dir))
     {
-        if (filesystem::is_directory(dirEntry))
-            request.filePaths.push_back(filesystem::path(dirEntry));
+        if (filesystem::is_directory(dir_entry))
+            request.file_paths.push_back(filesystem::path(dir_entry));
     }
     return request;
 }
 
-int startCommandInterface(Aggregator aggregator, External::Request initialRequest)
+int StartCommandInterface(Aggregator aggregator, External::Request initial_request)
 {
-    Command command = Command::SummaryStatistics;
-    External::Request request = initialRequest;
-    while (command != Command::Exit)
+    Command command = Command::kSummaryStatistics;
+    External::Request request = initial_request;
+    while (command != Command::kExit)
     {
-        if (aggregator.isInitialised())
+        if (aggregator.IsInitialised())
         {
             cout << "Enter your command: ";
-            string inputString;
-            getline(cin, inputString);
+            string input_string;
+            getline(cin, input_string);
             try
             {
-                tie(command, request) = parseCommand(inputString);
+                tie(command, request) = ParseCommand(input_string);
             }
             catch (const runtime_error &error)
             {
@@ -47,7 +47,7 @@ int startCommandInterface(Aggregator aggregator, External::Request initialReques
 
         External::Response response = visit(aggregator, request);
 
-        cout << External::serialize(response) << endl;
+        cout << External::Serialize(response) << endl;
     }
 
     return 0;
@@ -55,33 +55,33 @@ int startCommandInterface(Aggregator aggregator, External::Request initialReques
 
 int main(int argc, char *argv[])
 {
-    InitialArgs args = parseInitialArgs(argc, argv);
+    InitialArgs args = ParseInitialArgs(argc, argv);
 
-    External::Request initialRequest = generateSummaryStatisticsRequest(args.inputDir);
+    External::Request initial_request = GenerateSummaryStatisticsRequest(args.input_dir);
     Aggregator aggregator;
 
-    for (int i = 0; i < args.numWorkers; ++i)
+    for (int i = 0; i < args.num_workers; ++i)
     {
-        Fifo queue("pipe_" + to_string(i), args.bufferSize);
-        WorkerSettings workerSettings;
-        workerSettings.setQueue(queue);
-        workerSettings.getQueue().make();
+        Fifo queue("pipe_" + to_string(i), args.buffer_size);
+        WorkerSettings worker_settings;
+        worker_settings.set_queue(queue);
+        worker_settings.get_queue().Make();
         if (pid_t pid = fork())
         {
-            workerSettings.setPid(pid);
-            aggregator.addWorker(workerSettings);
+            worker_settings.set_pid(pid);
+            aggregator.add_worker(worker_settings);
         }
         else
         {
-            workerSettings.setPid(getpid());
-            Worker &worker = Worker::getInstance();
-            worker.setSettings(workerSettings);
-            worker.start();
+            worker_settings.set_pid(getpid());
+            Worker &worker = Worker::get_instance();
+            worker.set_settings(worker_settings);
+            worker.Start();
             return 0;
         }
     }
 
-    startCommandInterface(aggregator, initialRequest);
+    StartCommandInterface(aggregator, initial_request);
 
     return 0;
 }

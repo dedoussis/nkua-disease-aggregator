@@ -8,22 +8,22 @@ namespace Internal
 {
     struct SummaryStatisticsRequest
     {
-        std::vector<std::filesystem::path> filePaths;
+        std::vector<std::filesystem::path> file_paths;
     };
 
     struct DiseaseFrequencyRequest
     {
-        std::string virusName, startDate, endDate, country;
+        std::string virus_name, start_date, end_date, country;
     };
 
     struct SearchPatientRecordRequest
     {
-        std::string recordID;
+        std::string record_id;
     };
 
     struct RenderedResponse
     {
-        std::string renderedString;
+        std::string rendered_string;
     };
 
     struct SearchPatientRecordResponse
@@ -38,21 +38,21 @@ namespace Internal
 
     struct ExitResponse
     {
-        std::string logFile;
+        std::string log_file;
     };
 
     using Request = std::variant<DiseaseFrequencyRequest, SearchPatientRecordRequest, SummaryStatisticsRequest>;
     using Response = std::variant<RenderedResponse, SearchPatientRecordResponse, SummaryStatisticsResponse, ExitResponse>;
 
-    std::string serialize(Request object);
-    std::string serialize(Response object);
+    std::string Serialize(Request object);
+    std::string Serialize(Response object);
 
-    Deserializer<Request> getRequestDeserializer(Command type);
-    Deserializer<Response> getResponseDeserializer(Command type);
+    Deserializer<Request> GetRequestDeserializer(Command type);
+    Deserializer<Response> GetResponseDeserializer(Command type);
 
-    SearchPatientRecordResponse searchPatientRecordResponseDeserialize(std::string payload);
-    SummaryStatisticsResponse summaryStatisticsResponseDeserialize(std::string payload);
-    ExitResponse exitResponseDeserialize(std::string payload);
+    SearchPatientRecordResponse SearchPatientRecordResponseDeserialize(std::string payload);
+    SummaryStatisticsResponse SummaryStatisticsResponseDeserialize(std::string payload);
+    ExitResponse ExitResponseDeserialize(std::string payload);
 } // namespace Internal
 
 #endif
