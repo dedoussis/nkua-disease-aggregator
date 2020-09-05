@@ -4,10 +4,9 @@
 #include "common.h"
 #include "external.h"
 
-struct InitialArgs
-{
-    std::string input_dir;
-    int buffer_size, num_workers;
+struct InitialArgs {
+  std::string input_dir;
+  int buffer_size, num_workers;
 };
 
 InitialArgs ParseInitialArgs(int argc, char *argv[]);

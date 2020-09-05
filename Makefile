@@ -10,6 +10,9 @@ build: clean $(PROGRAM)
 clean:
 	rm -rf $(TARGET_DIR)
 
+format:
+	clang-format -i $(PROGRAM)/**
+
 distrib:
 	tar -czf $(PROGRAM).tar.gz $(PROGRAM) Makefile *.sh
 

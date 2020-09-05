@@ -5,19 +5,18 @@
 #include <string>
 #include <utility>
 
-struct Fifo
-{
+struct Fifo {
 private:
-    std::string path_;
-    int buffer_size_;
+  std::string path_;
+  int buffer_size_;
 
 public:
-    Fifo(std::string path, int buffer_size);
-    Fifo() = default;
-    void Make();
-    void Destroy();
-    void Enqueue(Command type, std::string payload);
-    std::pair<Command, std::string> Dequeue();
+  Fifo(std::string path, int buffer_size);
+  Fifo() = default;
+  void Make();
+  void Destroy();
+  void Enqueue(Command type, std::string payload);
+  std::pair<Command, std::string> Dequeue();
 };
 
 #endif
