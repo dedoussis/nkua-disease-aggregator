@@ -1,5 +1,5 @@
-#ifndef FIFO_H
-#define FIFO_H
+#ifndef DISEASE_AGGREGATOR_FIFO_H
+#define DISEASE_AGGREGATOR_FIFO_H
 
 #include "common.h"
 #include <string>

@@ -1,5 +1,5 @@
-#ifndef WORKER_H
-#define WORKER_H
+#ifndef DISEASE_AGGREGATOR_WORKER_H
+#define DISEASE_AGGREGATOR_WORKER_H
 
 #include "common.h"
 #include "fifo.h"

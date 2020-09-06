@@ -1,5 +1,5 @@
-#ifndef EXTERNAL_H
-#define EXTERNAL_H
+#ifndef DISEASE_AGGREGATOR_EXTERNAL_H
+#define DISEASE_AGGREGATOR_EXTERNAL_H
 
 #include "common.h"
 #include <variant>

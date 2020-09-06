@@ -1,5 +1,5 @@
-#ifndef ARGS_H
-#define ARGS_H
+#ifndef DISEASE_AGGREGATOR_ARGS_H
+#define DISEASE_AGGREGATOR_ARGS_H
 
 #include "common.h"
 #include "external.h"

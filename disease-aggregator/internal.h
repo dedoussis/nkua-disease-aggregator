@@ -1,5 +1,5 @@
-#ifndef INTERNAL_H
-#define INTERNAL_H
+#ifndef DISEASE_AGGREGATOR_INTERNAL_H
+#define DISEASE_AGGREGATOR_INTERNAL_H
 
 #include "common.h"
 #include <variant>

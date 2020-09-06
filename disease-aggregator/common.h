@@ -1,5 +1,5 @@
-#ifndef COMMON_H
-#define COMMON_H
+#ifndef DISEASE_AGGREGATOR_COMMON_H
+#define DISEASE_AGGREGATOR_COMMON_H
 
 #include <filesystem>
 #include <functional>
