@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <utility>
 #include <vector>
+#include <optional>
 
 std::vector<std::byte> ReadChunks(int fd, int max_buffer_size, int length) {
   std::vector<std::byte> destination;
@@ -77,27 +78,31 @@ void Fifo::Make() { mkfifo(path_.c_str(), 0666); }
 
 void Fifo::Destroy() { unlink(path_.c_str()); }
 
-void Fifo::Enqueue(Command type, std::string payload) {
-  Header header = {.type = type, .length = (uint32_t)payload.size()};
-
-  int fd = open(path_.c_str(), O_WRONLY);
-
-  WriteChunks(fd, ToByteVector(header), buffer_size_, sizeof(header));
-  WriteChunks(fd, ToByteVector(payload), buffer_size_, header.length);
-
-  close(fd);
+int Fifo::Open(mode_t mode) {
+  return open(path_.c_str(), mode);
 }
 
-std::pair<Command, std::string> Fifo::Dequeue() {
-  int fd = open(path_.c_str(), O_RDONLY);
+void Fifo::Enqueue(Command type, std::string payload, std::optional<int> fd) {
+  Header header = {.type = type, .length = (uint32_t)payload.size()};
+
+  int wfd = fd.has_value() ? fd.value() : Open(O_WRONLY);
+
+  WriteChunks(wfd, ToByteVector(header), buffer_size_, sizeof(header));
+  WriteChunks(wfd, ToByteVector(payload), buffer_size_, header.length);
+
+  close(wfd);
+}
+
+std::pair<Command, std::string> Fifo::Dequeue(std::optional<int> fd) {  
+  int rfd = fd.has_value() ? fd.value() : Open(O_RDONLY);
 
   std::vector<std::byte> headerBytes =
-      ReadChunks(fd, buffer_size_, sizeof(Header));
+      ReadChunks(rfd, buffer_size_, sizeof(Header));
   Header *header = reinterpret_cast<Header *>(headerBytes.data());
   std::string payload =
-      (char *)ReadChunks(fd, buffer_size_, header->length).data();
+      (char *)ReadChunks(rfd, buffer_size_, header->length).data();
 
-  close(fd);
+  close(rfd);
 
   return std::make_pair(header->type, payload);
 }

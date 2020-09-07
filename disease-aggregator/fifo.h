@@ -4,6 +4,7 @@
 #include "common.h"
 #include <string>
 #include <utility>
+#include <optional>
 
 struct Fifo {
 private:
@@ -13,10 +14,11 @@ private:
 public:
   Fifo(std::string path, int buffer_size);
   Fifo() = default;
+  int Open(mode_t mode);
   void Make();
   void Destroy();
-  void Enqueue(Command type, std::string payload);
-  std::pair<Command, std::string> Dequeue();
+  void Enqueue(Command type, std::string payload, std::optional<int> fd = std::nullopt);
+  std::pair<Command, std::string> Dequeue(std::optional<int> fd = std::nullopt);
 };
 
 #endif
