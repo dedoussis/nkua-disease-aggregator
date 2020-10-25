@@ -10,7 +10,7 @@
 struct Aggregator {
 private:
   std::vector<WorkerSettings> workers_;
-  std::map<std::string, pid_t> country_map_;
+  std::map<std::string, size_t> country_map_;
   inline void add_country_worker(std::string country, size_t worker_idx) {
     country_map_[country] = worker_idx;
   }

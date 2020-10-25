@@ -35,7 +35,7 @@ int StartCommandInterface(Aggregator aggregator,
       getline(cin, input_string);
       try {
         tie(command, request) = ParseCommand(input_string);
-      } catch (const runtime_error &error) {
+      } catch (const invalid_argument &error) {
         cerr << error.what() << endl;
         continue;
       }
@@ -50,7 +50,13 @@ int StartCommandInterface(Aggregator aggregator,
 }
 
 int main(int argc, char *argv[]) {
-  InitialArgs args = ParseInitialArgs(argc, argv);
+  InitialArgs args;
+  try {
+    args = ParseInitialArgs(argc, argv);
+  } catch (const invalid_argument &error) {
+    cerr << error.what() << endl;
+    return 0;
+  }
 
   External::Request initial_request =
       GenerateSummaryStatisticsRequest(args.input_dir);

@@ -14,7 +14,7 @@ num_records_per_file=$5
 IFS=$'\r\n' GLOBIGNORE='*' command eval 'diseases=($(cat ${diseases_file})) && countries=($(cat ${countries_file}))'
 
 declare -a record_types=(ENTER EXIT) 
-declare -a first_names=(John George Paul Mary Lia Tris Kate Jess Chris Nick Jenny Rachel Emily Andrew Simon Alex Marin Samuel Lee Joe)
+declare -a first_names=(John George Paul Mary Lia Tris Kate Jess Chris Nick Jenny Rachel Emily Andrew Simon Alex Martin Samuel Lee Joe)
 declare -a last_names=(Johnson Greenwood Rooney Martial Bate Williams Wood Kane Jones Clarke Davies Park Cole Colins Hopkins Klopp Dee)
 
 record_count=0

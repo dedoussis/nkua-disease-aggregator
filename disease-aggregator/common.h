@@ -52,7 +52,8 @@ inline std::vector<T> ExtendVector(std::vector<T> v1, std::vector<T> v2) {
 }
 
 template <typename Item>
-std::vector<std::vector<Item>> Group(std::vector<Item> v, size_t groups) {
+inline std::vector<std::vector<Item>> Group(std::vector<Item> v,
+                                            size_t groups) {
   std::vector<std::vector<Item>> groupped_vector(groups);
   for (size_t i = 0; i < v.size(); i++)
     groupped_vector[i % groups].push_back(v[i]);
