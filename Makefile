@@ -36,7 +36,7 @@ build-docker:
 	docker build -t $(PROGRAM) .
 
 run-docker: build-docker
-	docker run --rm -v "$(shell pwd):/runner/" $(PROGRAM) -w 3 -b 2 -i /runner/input_dir.tmp
+	docker run -it --rm -v "$(shell pwd):/runner/" $(PROGRAM) -w 3 -b 2 -i /runner/input_dir.tmp
 
 build-in-docker:
 	docker run --rm -it -v "$(shell pwd):/app/" -w /app/ gcc make run
