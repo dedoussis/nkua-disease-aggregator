@@ -13,7 +13,6 @@ private:
 public:
   Fifo(std::string path, int buffer_size);
   Fifo() = default;
-  int Open(mode_t mode);
   void Make();
   void Destroy();
   void Enqueue(Command type, std::string payload);
