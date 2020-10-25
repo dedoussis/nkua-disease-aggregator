@@ -33,7 +33,7 @@ InitialArgs ParseInitialArgs(int argc, char *argv[]) {
       args.input_dir = optarg;
       break;
     default:
-      throw help_message;
+      throw std::invalid_argument(help_message);
     }
   }
   return args;
@@ -52,7 +52,7 @@ std::tuple<Command, External::Request> ParseCommand(std::string input_string) {
                          : input_string.substr(command_string.size() + 1);
 
   if (input_string.empty() || !command_registry.contains(command_string))
-    throw std::runtime_error("Invalid command!");
+    throw std::invalid_argument("Invalid command!");
 
   Command command = command_registry[command_string];
   Deserializer<External::Request> deserializer =

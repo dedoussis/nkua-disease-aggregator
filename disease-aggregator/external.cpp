@@ -14,7 +14,7 @@ struct ResponseSerializer {
         Join("Patients found:", response.records.size()) + kNL;
 
     for (auto record : response.records)
-      serialized += record.Serialize() + kNL;
+      serialized += "😷 " + record.Serialize() + kNL;
 
     return serialized;
   }
