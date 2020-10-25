@@ -16,11 +16,11 @@ public:
   void set_queue(Fifo queue);
   pid_t get_pid() const;
   void set_pid(pid_t pid);
-  inline bool operator==(const WorkerSettings &other) const {
-    return get_pid() == other.get_pid();
+  inline bool operator==(const WorkerSettings &rhs) const {
+    return get_pid() == rhs.get_pid();
   };
-  inline bool operator<(const WorkerSettings &other) const {
-    return get_pid() < other.get_pid();
+  inline bool operator<(const WorkerSettings &rhs) const {
+    return get_pid() < rhs.get_pid();
   };
 };
 struct WorkerData {
