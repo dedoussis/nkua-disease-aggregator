@@ -1,6 +1,7 @@
 .vscode
 *.dSYM
 bin
+deps
 *.tar.gz
 *.tmp
 log_file.*
